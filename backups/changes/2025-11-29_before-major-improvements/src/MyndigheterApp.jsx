@@ -16,7 +16,6 @@ const RegistryView = React.lazy(() => import('./components/views/RegistryView'))
 const DepartmentsView = React.lazy(() => import('./components/views/DepartmentsView'));
 const RegionsView = React.lazy(() => import('./components/views/RegionsView'));
 const AnalysisView = React.lazy(() => import('./components/views/AnalysisView'));
-const AboutDataView = React.lazy(() => import('./components/views/AboutDataView'));
 
 // Hooks
 const useDarkMode = () => {
@@ -71,7 +70,6 @@ export default function MyndigheterApp() {
   const [compareList, setCompareList] = useState([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [selectedAgency, setSelectedAgency] = useState(null);
-  const [selectedAgenciesForChart, setSelectedAgenciesForChart] = useState([]);
 
   React.useEffect(() => {
     let timer;
@@ -182,7 +180,6 @@ export default function MyndigheterApp() {
       <Suspense fallback={<ViewLoader />}>
         {activeTab === 'overview' && (
           <DashboardView
-            agencies={agencies}
             activeSeries={activeSeries}
             setActiveSeries={setActiveSeries}
             normalizeData={normalizeData}
@@ -202,16 +199,6 @@ export default function MyndigheterApp() {
               setIsAnimating(val);
             }}
             animationYear={animationYear}
-            selectedAgenciesForChart={selectedAgenciesForChart}
-            onToggleAgencyForChart={(agency) => {
-              setSelectedAgenciesForChart(prev => {
-                if (prev.find(a => a.n === agency.n)) {
-                  return prev.filter(a => a.n !== agency.n);
-                }
-                if (prev.length >= 3) return prev;
-                return [...prev, agency];
-              });
-            }}
           />
         )}
 
@@ -254,14 +241,10 @@ export default function MyndigheterApp() {
         )}
 
         {activeTab === 'regions' && (
-          <RegionsView
+          <RegionsView 
             regionStats={regionStats}
             agencies={agencies}
           />
-        )}
-
-        {activeTab === 'about-data' && (
-          <AboutDataView />
         )}
       </Suspense>
     </Layout>

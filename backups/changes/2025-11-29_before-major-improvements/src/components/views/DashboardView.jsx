@@ -1,13 +1,12 @@
 import React, { useMemo } from 'react';
-import {
-  Area, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+import { 
+  Area, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   ReferenceArea, ComposedChart, Legend, Label, LabelList
 } from 'recharts';
-import { Building2, Users, Play, Square, ArrowUp, ArrowDown, Minus, Download, TrendingUp } from 'lucide-react';
+import { Building2, Users, Play, Square, ArrowUp, ArrowDown, Minus, Download } from 'lucide-react';
 import SeriesSelector, { normalizeSeriesData } from '../SeriesSelector';
 import SeriesChartTypeSelector from '../SeriesChartTypeSelector';
 import RangeSlider from '../ui/RangeSlider';
-import AgencySelector from '../ui/AgencySelector';
 import { governmentPeriods, timeSeriesData, genderHistoryData } from '../../data/constants';
 import { getStatsByYear } from '../../data/swedenStats';
 
@@ -42,7 +41,6 @@ const StatCard = ({ title, value, subValue, icon: Icon, trend, colorClass = "bg-
 );
 
 const DashboardView = ({
-  agencies,
   activeSeries,
   setActiveSeries,
   normalizeData,
@@ -58,9 +56,7 @@ const DashboardView = ({
   setGenderMode,
   perCapita,
   setPerCapita,
-  onReset,
-  selectedAgenciesForChart,
-  onToggleAgencyForChart
+  onReset
 }) => {
 
   // Derived stats
@@ -105,56 +101,6 @@ const DashboardView = ({
     }
     return data;
   }, [yearRange, isAnimating, animationYear, normalizeData, activeSeries, perCapita, genderMode]);
-
-  // Process agency-specific historical data
-  const agencyChartData = useMemo(() => {
-    if (!selectedAgenciesForChart || selectedAgenciesForChart.length === 0) {
-      return null;
-    }
-
-    // For each selected agency, extract their employee history
-    return selectedAgenciesForChart.map((agency, index) => {
-      const colors = ['#0ea5e9', '#f59e0b', '#10b981']; // Sky, amber, emerald
-      const color = colors[index % colors.length];
-
-      // Process empH (employee history) data
-      const historyData = {};
-      if (agency.empH) {
-        Object.entries(agency.empH).forEach(([year, value]) => {
-          const y = parseInt(year);
-          if (y >= yearRange[0] && y <= (isAnimating ? animationYear : yearRange[1])) {
-            historyData[y] = value;
-          }
-        });
-      }
-
-      return {
-        name: agency.n,
-        shortName: agency.sh || agency.n,
-        color,
-        data: historyData,
-        current: agency.emp,
-        women: agency.w,
-        men: agency.m
-      };
-    });
-  }, [selectedAgenciesForChart, yearRange, isAnimating, animationYear]);
-
-  // Merge agency data into chartData
-  const enrichedChartData = useMemo(() => {
-    if (!agencyChartData) return chartData;
-
-    return chartData.map(yearData => {
-      const enriched = { ...yearData };
-
-      agencyChartData.forEach((agencyInfo, index) => {
-        const agencyKey = `agency_${index}`;
-        enriched[agencyKey] = agencyInfo.data[yearData.year] || null;
-      });
-
-      return enriched;
-    });
-  }, [chartData, agencyChartData]);
 
   const handleExportChart = () => {
     const headers = ['År', 'Myndigheter', 'Anställda', 'Befolkning', 'BNP (MSEK)', 'Kvinnor', 'Män'];
@@ -235,32 +181,7 @@ const DashboardView = ({
 
   return (
     <div className="space-y-8 animate-fade-in">
-
-      {/* Agency Selector Section */}
-      {agencies && (
-        <div className="bg-gradient-to-br from-sky-50 to-white p-6 rounded-3xl border border-sky-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-sky-100 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-sky-600" />
-            </div>
-            <div>
-              <h3 className="font-serif text-lg text-slate-900 font-semibold">
-                Jämför specifika myndigheter
-              </h3>
-              <p className="text-xs text-slate-500">
-                Välj upp till 3 myndigheter för att se deras individuella utveckling över tid
-              </p>
-            </div>
-          </div>
-          <AgencySelector
-            agencies={agencies}
-            selectedAgencies={selectedAgenciesForChart}
-            onToggleAgency={onToggleAgencyForChart}
-            maxSelections={3}
-          />
-        </div>
-      )}
-
+      
       <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
         <div className="mb-6">
           <RangeSlider
@@ -306,7 +227,7 @@ const DashboardView = ({
       </div>
 
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-card relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h3 className="font-serif text-2xl text-slate-900 font-semibold">Utveckling över tid</h3>
             <p className="text-sm text-slate-500 mt-1 font-medium">
@@ -324,16 +245,9 @@ const DashboardView = ({
           </button>
         </div>
 
-        {/* Data Source Citation */}
-        <div className="mb-6 px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
-          <p className="text-[11px] text-slate-500 font-medium">
-            <span className="font-semibold text-slate-600">Källor:</span> ESV (myndighetsdata, anställda), SCB (befolkning, BNP, könsfördelning) • Uppdaterad december 2024
-          </p>
-        </div>
-
         <div className="h-[500px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={enrichedChartData} margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
+            <ComposedChart data={chartData} margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
               <defs>
                 <linearGradient id="colorAgencies" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#475569" stopOpacity={0.1}/>
@@ -414,94 +328,10 @@ const DashboardView = ({
               {activeSeries.women && renderSeries('w', 'Kvinnor', '#be185d', 'left', '', seriesChartTypes.women)}
               {activeSeries.men && renderSeries('m', 'Män', '#4f46e5', 'left', '', seriesChartTypes.men)}
 
-              {/* Agency-specific lines */}
-              {agencyChartData && agencyChartData.map((agencyInfo, index) => (
-                <Line
-                  key={`agency-${index}`}
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey={`agency_${index}`}
-                  name={agencyInfo.shortName}
-                  stroke={agencyInfo.color}
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: agencyInfo.color }}
-                  activeDot={{ r: 6 }}
-                  connectNulls={false}
-                />
-              ))}
-
             </ComposedChart>
           </ResponsiveContainer>
         </div>
       </div>
-
-      {/* Agency Details Cards */}
-      {agencyChartData && agencyChartData.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {agencyChartData.map((agencyInfo, index) => {
-            const womenPct = agencyInfo.women && agencyInfo.men
-              ? Math.round((agencyInfo.women / (agencyInfo.women + agencyInfo.men)) * 100)
-              : null;
-
-            return (
-              <div
-                key={index}
-                className="bg-white p-6 rounded-2xl border-2 shadow-sm hover:shadow-md transition-all"
-                style={{ borderColor: agencyInfo.color }}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h4 className="font-serif text-lg text-slate-900 font-semibold mb-1 leading-tight">
-                      {agencyInfo.name}
-                    </h4>
-                    <div className="flex items-center gap-2 mt-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: agencyInfo.color }}
-                      />
-                      <span className="text-xs font-mono text-slate-500 uppercase tracking-wider">
-                        Vald myndighet
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      Anställda
-                    </p>
-                    <p className="text-2xl font-serif font-semibold text-slate-900 old-style-nums">
-                      {agencyInfo.current?.toLocaleString('sv-SE') || '–'}
-                    </p>
-                  </div>
-
-                  {womenPct !== null && (
-                    <div>
-                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                        Könsfördelning
-                      </p>
-                      <div className="flex items-center gap-2 text-xs mb-1">
-                        <span className="text-pink-600 font-medium">{womenPct}% Kvinnor</span>
-                        <span className="text-indigo-600 font-medium">{100 - womenPct}% Män</span>
-                      </div>
-                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden flex">
-                        <div
-                          className="bg-pink-400 h-full"
-                          style={{ width: `${womenPct}%` }}
-                        />
-                        <div
-                          className="bg-indigo-500 h-full flex-1"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
