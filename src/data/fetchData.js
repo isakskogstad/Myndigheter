@@ -85,7 +85,11 @@ export async function fetchAllAgencyData() {
 }
 
 /**
- * Merge and transform raw data into app-ready format
+ * Merge and transform raw data into app-ready compact format
+ * Uses short property names to match existing MyndigheterApp.jsx format:
+ * n=name, s=start, e=end, d=department, en=english, sh=short, emp=employees,
+ * fte=FTE, w=women, m=men, str=structure, cof=cofog, gd=hasGD, fteH=FTE history,
+ * org=orgNr, tel=phone, web=website, grp=group, city=city, host=host, sfs=SFS ref
  */
 export function transformAgencyData(rawData) {
   const { scb, stkt, sfs, agv, esv, wd } = rawData;
@@ -101,44 +105,47 @@ export function transformAgencyData(rawData) {
     const esvData = esv[name] || {};
     const wdData = wd[name] || {};
 
-    agencies.push({
-      name,
-      // From stkt (Statskontoret)
-      department: data.department || 'Okänt',
-      orgNr: data.org_nr,
-      cofog: data.cofog,
-      cofog10: data.cofog10,
-      structure: data.structure,
-      hasGD: data.has_gd,
-      createdBy: data.created_by,
-      latestUpdatedBy: data.latest_updated_by,
-      fte: data.fte || {},
-      otherNames: data.other_names || [],
+    // Extract city from office address
+    const officeAddr = agvData.office_address || '';
+    const cityMatch = officeAddr.match(/\d{3}\s*\d{2}\s+([A-ZÅÄÖ]+)/);
+    const city = cityMatch ? cityMatch[1] : undefined;
 
-      // From scb
-      employees: scbData.employees,
+    // Get employee counts from SCB data
+    const scbEmployees = scbData.employees || {};
+    const latestYear = Object.keys(scbEmployees).sort().pop();
+    const latestEmp = latestYear ? scbEmployees[latestYear] : {};
 
-      // From sfs
-      sfsRef: sfsData.created_by,
+    // Build compact agency object matching MyndigheterApp.jsx format
+    const agency = {
+      n: name,  // name
+      d: data.department || undefined,  // department
+      s: wdData.start || data.start,  // start date
+      e: wdData.end || data.end,  // end date (for dissolved agencies)
+      en: wdData.name_en,  // english name
+      sh: data.abbreviation,  // short name / abbreviation
+      emp: latestEmp.total,  // total employees
+      fte: data.fte?.[latestYear],  // FTE for latest year
+      w: latestEmp.women,  // women count
+      m: latestEmp.men,  // men count
+      str: data.structure,  // structure type
+      cof: data.cofog10,  // COFOG code
+      gd: data.has_gd,  // has generaldirektör
+      fteH: data.fte || {},  // FTE history
+      org: data.org_nr,  // organization number
+      tel: agvData.phone,  // telephone
+      web: agvData.website,  // website
+      grp: agvData.group,  // group
+      city: city,  // city
+      host: data.host_authority,  // host authority
+      sfs: sfsData.created_by,  // SFS reference
+    };
 
-      // From agv
-      email: agvData.email,
-      phone: agvData.phone,
-      website: agvData.website,
-      postalAddress: agvData.postal_address,
-      officeAddress: agvData.office_address,
-      group: agvData.group,
-
-      // From esv
-      budget: esvData.budget,
-
-      // From wd (Wikidata)
-      wikidataId: wdData.id,
-      nameEn: wdData.name_en,
-      startDate: wdData.start || data.start,
-      endDate: wdData.end,
-      wikiUrl: wdData.wiki_url,
+    // Remove undefined properties to keep objects clean
+    Object.keys(agency).forEach(key => {
+      if (agency[key] === undefined) delete agency[key];
     });
+
+    agencies.push(agency);
   });
 
   return agencies;

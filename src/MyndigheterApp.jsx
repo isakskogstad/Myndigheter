@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceArea, Legend, ComposedChart, PieChart, Pie } from 'recharts';
-import { Search, Download, ChevronDown, ChevronRight, X, Copy, Check, Play, Square, BarChart3, TrendingUp, LineChart as LineChartIcon, Users, Building2, MapPin, Calendar, ExternalLink, Phone, Info, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { Search, Download, ChevronDown, ChevronRight, X, Copy, Check, Play, Square, BarChart3, TrendingUp, LineChart as LineChartIcon, Users, Building2, MapPin, Calendar, ExternalLink, Phone, Info, ArrowUp, ArrowDown, Minus, RefreshCw } from 'lucide-react';
 
 // Import constants from separate file
 import {
@@ -12,6 +12,12 @@ import {
   genderHistoryData,
   agencyHistory
 } from './data/constants';
+
+// Import data fetching hook
+import { useAgencyData } from './hooks/useAgencyData';
+
+// Import loading states
+import { LoadingState, ErrorState } from './components/LoadingState';
 
 // Animerad siffra med cleanup (FIX #4)
 const AnimatedNumber = ({ value, duration = 400, prefix = '', suffix = '', className = '' }) => {
@@ -861,16 +867,22 @@ const agenciesData = [
 ];
 
 export default function MyndigheterV6() {
+  // External data fetching with caching
+  const { data: externalData, loading: dataLoading, error: dataError, refresh: refreshData, cacheInfo } = useAgencyData();
+
+  // Use external data if available, otherwise fall back to embedded data
+  const currentAgenciesData = externalData || agenciesData;
+
   // FIX #29: URL-baserad state för delning
   const [activeView, setActiveView] = useUrlState('view', 'overview');
   const [yearRange, setYearRange] = useUrlState('years', [1978, 2025]);
   const [registrySearch, setRegistrySearch] = useUrlState('search', '');
   const [departmentFilter, setDepartmentFilter] = useUrlState('dept', 'all');
-  
+
   const [showRegistry, setShowRegistry] = useState(false);
   const [showGovernments, setShowGovernments] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [chartType, setChartType] = useState('area');
   const [chartMetric, setChartMetric] = useState('count');
   const [showDissolved, setShowDissolved] = useState(false);
@@ -929,7 +941,7 @@ export default function MyndigheterV6() {
   // FIX #14: Info modal för FTE
   const [showFteInfo, setShowFteInfo] = useState(false);
   
-  const activeAgencies = useMemo(() => agenciesData.filter(a => !a.e), []);
+  const activeAgencies = useMemo(() => currentAgenciesData.filter(a => !a.e), [currentAgenciesData]);
   const departments = useMemo(() => [...new Set(activeAgencies.map(a => a.d).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'sv')), [activeAgencies]);
 
   // FIX #9: Regionstatistik
@@ -950,10 +962,10 @@ export default function MyndigheterV6() {
   const yearAgencies = useMemo(() => {
     if (!selectedYear) return { formed: [], dissolved: [] };
     return {
-      formed: agenciesData.filter(a => a.s?.startsWith(String(selectedYear))),
-      dissolved: agenciesData.filter(a => a.e?.startsWith(String(selectedYear)))
+      formed: currentAgenciesData.filter(a => a.s?.startsWith(String(selectedYear))),
+      dissolved: currentAgenciesData.filter(a => a.e?.startsWith(String(selectedYear)))
     };
-  }, [selectedYear]);
+  }, [selectedYear, currentAgenciesData]);
 
   // Relaterade myndigheter
   const relatedAgencies = useMemo(() => {
@@ -968,16 +980,16 @@ export default function MyndigheterV6() {
   const searchSuggestions = useMemo(() => {
     if (!searchInput || searchInput.length < 2) return [];
     const search = searchInput.toLowerCase();
-    return agenciesData.filter(a => 
-      a.n.toLowerCase().includes(search) || 
+    return currentAgenciesData.filter(a =>
+      a.n.toLowerCase().includes(search) ||
       a.sh?.toLowerCase().includes(search) ||
       a.en?.toLowerCase().includes(search)
     ).slice(0, 8);
-  }, [searchInput]);
+  }, [searchInput, currentAgenciesData]);
 
   // FIX #6 & #7: Korrekt loading och filtrering
   const filteredAgencies = useMemo(() => {
-    let result = [...agenciesData];
+    let result = [...currentAgenciesData];
     
     if (registrySearch) {
       const search = registrySearch.toLowerCase();
@@ -1001,7 +1013,7 @@ export default function MyndigheterV6() {
     });
     
     return result;
-  }, [registrySearch, registryFilter, departmentFilter, registrySort, selectedDept]);
+  }, [registrySearch, registryFilter, departmentFilter, registrySort, selectedDept, currentAgenciesData]);
 
   // FIX #7: Separat hantering för gruppering
   const groupedAgencies = useMemo(() => {
@@ -1385,6 +1397,16 @@ export default function MyndigheterV6() {
     );
   };
 
+  // Show loading state while fetching external data (only if no fallback data)
+  if (dataLoading && !agenciesData.length) {
+    return <LoadingState message="Hämtar myndighetsdata..." />;
+  }
+
+  // Show error state if fetch failed and no fallback data
+  if (dataError && !agenciesData.length) {
+    return <ErrorState error={dataError} onRetry={refreshData} />;
+  }
+
   return (
     <div className="min-h-screen p-4 md:p-6 bg-gray-50 text-gray-900">
       <div className="max-w-7xl mx-auto">
@@ -1397,17 +1419,32 @@ export default function MyndigheterV6() {
               Svenska myndigheter
             </h1>
             <p className="text-sm text-gray-600 mt-1">
-              <AnimatedNumber value={activeAgencies.length} className="font-semibold text-blue-600" /> aktiva · 
-              <AnimatedNumber value={agenciesData.filter(a => a.e).length} className="font-semibold text-gray-500 ml-1" /> nedlagda
+              <AnimatedNumber value={activeAgencies.length} className="font-semibold text-blue-600" /> aktiva ·
+              <AnimatedNumber value={currentAgenciesData.filter(a => a.e).length} className="font-semibold text-gray-500 ml-1" /> nedlagda
+              {cacheInfo?.exists && (
+                <span className="ml-2 text-xs text-gray-400">
+                  · Cachad {cacheInfo.ageHours < 1 ? 'nyss' : `${Math.round(cacheInfo.ageHours)}h sedan`}
+                </span>
+              )}
             </p>
           </div>
-          <button 
-            onClick={exportCSV}
-            className="self-start sm:self-auto px-4 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium flex items-center gap-2 min-h-[44px]"
-          >
-            <Download className="w-4 h-4" />
-            Exportera CSV
-          </button>
+          <div className="flex gap-2 self-start sm:self-auto">
+            <button
+              onClick={refreshData}
+              disabled={dataLoading}
+              className="px-3 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium flex items-center gap-2 min-h-[44px] disabled:opacity-50"
+              title="Uppdatera data från extern källa"
+            >
+              <RefreshCw className={`w-4 h-4 ${dataLoading ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              onClick={exportCSV}
+              className="px-4 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium flex items-center gap-2 min-h-[44px]"
+            >
+              <Download className="w-4 h-4" />
+              Exportera CSV
+            </button>
+          </div>
         </div>
 
         {/* FIX #20: Breadcrumbs */}
@@ -1936,7 +1973,7 @@ export default function MyndigheterV6() {
               <Building2 className="w-6 h-6 text-blue-600" />
               <div>
                 <h2 className={`text-lg ${headingStyle}`}>Myndighetsregister</h2>
-                <p className="text-sm text-gray-600">{agenciesData.length} myndigheter totalt</p>
+                <p className="text-sm text-gray-600">{currentAgenciesData.length} myndigheter totalt</p>
               </div>
             </div>
             <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showRegistry ? 'rotate-180' : ''}`} />
