@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAgencyData, useUrlState } from './hooks/useAgencyData';
-import { LoadingState, ErrorState } from './components/LoadingState';
+import { LoadingState, ErrorState } from './components/ui/LoadingState';
 import { deptColors, regionColors } from './data/constants';
 
 // Layout & Views

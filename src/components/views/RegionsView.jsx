@@ -1,7 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Info } from 'lucide-react';
-import RegionHistoryChart from '../RegionHistoryChart';
+import RegionHistoryChart from '../charts/RegionHistoryChart';
 
 const RegionsView = ({ regionStats, agencies }) => {
   return (

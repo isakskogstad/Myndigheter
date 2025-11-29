@@ -1,7 +1,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { deptColors } from '../../data/constants';
-import DeptHistoryChart from '../DeptHistoryChart';
+import DeptHistoryChart from '../charts/DeptHistoryChart';
 
 const getShortDeptName = (dept) => dept.replace('departementet', '').trim();
 

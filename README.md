@@ -1,14 +1,56 @@
-# React-komponenter på GitHub Pages
+# Svenska Myndigheter | Analysverktyg
 
-Detta repo innehåller React-komponenter som byggs och deployas automatiskt till GitHub Pages.
+Ett modernt, interaktivt verktyg för att utforska, visualisera och analysera den svenska statsförvaltningens utveckling från 1978 till idag.
 
-## Hur man använder
-- Klona repo:t: `git clone https://github.com/isakskogstad/myndigheter.git`
-- Installera: `npm install`
-- Kör lokalt: `npm start`
-- Bygg och deploy: `npm run deploy` (eller pusha till main för automatisk deployment)
+**Live Demo:** [isakskogstad.github.io/myndigheter](https://isakskogstad.github.io/myndigheter)
 
-## Automatisk deployment
-Vid push till `main`-branchen körs GitHub Actions automatiskt och deployas till GitHub Pages.
+![Dashboard Preview](https://via.placeholder.com/1200x600.png?text=Svenska+Myndigheter+Dashboard)
 
-Besök: https://isakskogstad.github.io/myndigheter
+## Funktioner
+
+*   **Historisk Överblick:** Se hur antalet myndigheter och anställda förändrats över tid (1978-2025).
+*   **Jämförelsevy:** Jämför upp till tre myndigheter sida-vid-sida (personal, budget, struktur).
+*   **Avancerade Filter:** Sök och filtrera på departement, ledningsform, status och region.
+*   **Datavisualisering:** Interaktiva grafer för könsfördelning, regional spridning och departementsstruktur.
+*   **Export:** Ladda ner dataset som CSV för egen analys.
+
+## Teknisk Översikt
+
+Projektet är byggt med **React 18** och använder en modern "Scandinavian Clean" designfilosofi.
+
+*   **Styling:** Tailwind CSS (Stone & Sage färgpalett)
+*   **Grafer:** Recharts & Chart.js
+*   **Ikoner:** Lucide React
+*   **Arkitektur:** Modulär komponentstruktur med separata vyer.
+
+### Projektstruktur
+
+```
+src/
+├── components/
+│   ├── layout/         # Sidebar, Header, Layout wrapper
+│   ├── views/          # Dashboard, Register, Jämförelse, m.m.
+│   ├── charts/         # Återanvändbara grafer
+│   └── ui/             # UI-komponenter (Slider, Loading, etc.)
+├── data/               # Statiska dataset och API-logik
+└── hooks/              # Custom hooks (useAgencyData, useUrlState)
+```
+
+## Komma igång
+
+1.  **Klona:** `git clone https://github.com/isakskogstad/myndigheter.git`
+2.  **Installera:** `npm install`
+3.  **Starta:** `npm start`
+4.  **Bygg:** `npm run build`
+
+## Datakällor
+
+Data sammanställs från öppna källor:
+*   [Civic Tech Sweden](https://github.com/civictechsweden/myndighetsdata)
+*   Ekonomistyrningsverket (ESV)
+*   Statistiska centralbyrån (SCB)
+*   Wikidata
+
+## Licens
+
+MIT License.
