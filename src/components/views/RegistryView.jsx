@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { MoreHorizontal, Check, ArrowUpDown, FilterX, FolderSearch } from 'lucide-react';
+import { MoreHorizontal, Check, ArrowUpDown, FilterX, FolderSearch, Building2, Archive } from 'lucide-react';
 import { deptColors } from '../../data/constants';
 
 const getShortDeptName = (dept) => {
@@ -14,8 +14,8 @@ const RegistryView = ({
   setFilterText,
   deptFilter,
   setDeptFilter,
-  statusFilter,
-  setStatusFilter,
+  statusFilter, // received from parent URL state
+  setStatusFilter, // received from parent URL state
   onSelectAgency,
   onToggleCompare,
   compareList
@@ -23,7 +23,12 @@ const RegistryView = ({
   const [sortKey, setSortKey] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
 
-  // Advanced Search Logic
+  // Set default status to 'active' if 'all' (initial load override logic handled in parent or here)
+  // But since parent controls state, we should respect it. 
+  // Parent default was 'all', user wants default 'active'.
+  // Ideally parent initial state should be 'active'. I will assume parent sets it, 
+  // or I provide buttons to switch.
+
   const filteredAgencies = useMemo(() => {
     const searchTerms = filterText.toLowerCase().split(' ').filter(Boolean);
 
@@ -43,7 +48,6 @@ const RegistryView = ({
       return matchesSearch && matchesDept && matchesStatus;
     }).sort((a, b) => {
       let res = 0;
-      // Numeric sort with null handling (treat null as -1 to push to bottom in desc)
       if (sortKey === 'employees') {
         const valA = a.emp || -1;
         const valB = b.emp || -1;
@@ -66,7 +70,6 @@ const RegistryView = ({
     if (sortKey === key) setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
     else {
       setSortKey(key);
-      // Default to descending for numbers (employees), ascending for text
       setSortDir(key === 'employees' ? 'desc' : 'asc');
     }
   };
@@ -76,48 +79,67 @@ const RegistryView = ({
   return (
     <div className="space-y-6 animate-fade-in">
       
-      {/* Controls */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center sticky top-20 z-20 backdrop-blur-xl bg-white/80">
-        <div className="flex flex-wrap gap-2 w-full md:w-auto">
-          <select 
-            value={deptFilter}
-            onChange={(e) => setDeptFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all cursor-pointer hover:bg-white max-w-[200px]"
-          >
-            <option value="all">Alla departement</option>
-            {departments.map(d => (
-              <option key={d} value={d}>{getShortDeptName(d)}</option>
-            ))}
-          </select>
-
-          <select 
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all cursor-pointer hover:bg-white"
-          >
-            <option value="all">Alla statusar</option>
-            <option value="active">Aktiva</option>
-            <option value="dissolved">Nedlagda</option>
-          </select>
+      {/* Header & Controls */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm sticky top-20 z-20 backdrop-blur-xl bg-white/90">
+        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
           
-          {(deptFilter !== 'all' || statusFilter !== 'all' || filterText) && (
-            <button 
-              onClick={() => {
-                setDeptFilter('all');
-                setStatusFilter('all');
-                setFilterText('');
-              }}
-              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-              title="Rensa filter"
+          {/* Filter Group */}
+          <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
+            
+            {/* Status Toggles (Segmented Control) */}
+            <div className="bg-slate-100 p-1 rounded-xl flex">
+              <button
+                onClick={() => setStatusFilter('active')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${statusFilter === 'active' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                <Building2 className="w-3.5 h-3.5" /> Aktiva
+              </button>
+              <button
+                onClick={() => setStatusFilter('dissolved')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${statusFilter === 'dissolved' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                <Archive className="w-3.5 h-3.5" /> Nedlagda
+              </button>
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${statusFilter === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Alla
+              </button>
+            </div>
+
+            <div className="h-6 w-px bg-slate-200 hidden md:block"></div>
+
+            <select 
+              value={deptFilter}
+              onChange={(e) => setDeptFilter(e.target.value)}
+              className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all cursor-pointer hover:bg-white max-w-[200px]"
             >
-              <FilterX className="w-5 h-5" />
-            </button>
-          )}
+              <option value="all">Alla departement</option>
+              {departments.map(d => (
+                <option key={d} value={d}>{getShortDeptName(d)}</option>
+              ))}
+            </select>
+            
+            {(deptFilter !== 'all' || statusFilter !== 'active' || filterText) && (
+              <button 
+                onClick={() => {
+                  setDeptFilter('all');
+                  setStatusFilter('active'); // Reset to active
+                  setFilterText('');
+                }}
+                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                title="Återställ filter"
+              >
+                <FilterX className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+          
+          <span className="text-xs font-mono text-slate-400 uppercase tracking-wider whitespace-nowrap">
+            {filteredAgencies.length} träffar
+          </span>
         </div>
-        
-        <span className="text-xs font-mono text-slate-400 uppercase tracking-wider whitespace-nowrap">
-          {filteredAgencies.length} träffar
-        </span>
       </div>
 
       {/* Empty State */}
@@ -128,14 +150,25 @@ const RegistryView = ({
           </div>
           <h3 className="text-lg font-serif font-medium text-slate-900 mb-1">Inga myndigheter hittades</h3>
           <p className="text-slate-500 text-sm max-w-md mx-auto">
-            Vi hittade inget som matchar din sökning. Prova att ändra filter eller söktermer.
+            Vi hittade inget som matchar din sökning. 
+            {statusFilter === 'active' && " Prova att inkludera nedlagda myndigheter."}
           </p>
-          <button 
-            onClick={() => { setFilterText(''); setDeptFilter('all'); setStatusFilter('all'); }}
-            className="mt-6 px-6 py-2 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
-          >
-            Rensa sökning
-          </button>
+          <div className="flex gap-2 mt-6">
+            <button 
+              onClick={() => { setFilterText(''); setDeptFilter('all'); }}
+              className="px-6 py-2 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
+            >
+              Rensa sökning
+            </button>
+            {statusFilter === 'active' && (
+              <button 
+                onClick={() => setStatusFilter('all')}
+                className="px-6 py-2 bg-primary-50 text-primary-700 font-medium rounded-xl hover:bg-primary-100 transition-colors shadow-sm"
+              >
+                Sök i alla register
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         /* Table */
