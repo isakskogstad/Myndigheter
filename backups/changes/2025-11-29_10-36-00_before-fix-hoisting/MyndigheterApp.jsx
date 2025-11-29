@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Area, BarChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceArea, Legend, ComposedChart, PieChart, Pie } from 'recharts';
-import { Search, Download, ChevronDown, X, Copy, Check, Play, Square, BarChart3, TrendingUp, Users, Building2, MapPin, Calendar, ExternalLink, Phone, Info, ArrowUp, ArrowDown, Minus, RefreshCw, Moon, Sun, Undo2, Redo2, Printer } from 'lucide-react';
+import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceArea, Legend, ComposedChart, PieChart, Pie } from 'recharts';
+import { Search, Download, ChevronDown, ChevronRight, X, Copy, Check, Play, Square, BarChart3, TrendingUp, LineChart as LineChartIcon, Users, Building2, MapPin, Calendar, ExternalLink, Phone, Info, ArrowUp, ArrowDown, Minus, RefreshCw, Moon, Sun, Undo2, Redo2, Printer } from 'lucide-react';
 
 // Import constants from separate file
 import {
@@ -477,24 +477,6 @@ export default function MyndigheterV6() {
     setTooltipAgency(null);
   }, []);
 
-  // Handle undo - MUST be defined before useEffect that uses it
-  const handleUndo = useCallback(() => {
-    filterHistory.undo();
-    const prev = filterHistory.current;
-    setRegistrySearch(prev.search);
-    setRegistryFilter(prev.filter);
-    setDepartmentFilter(prev.dept);
-  }, [filterHistory, setRegistrySearch, setDepartmentFilter]);
-
-  // Handle redo - MUST be defined before useEffect that uses it
-  const handleRedo = useCallback(() => {
-    filterHistory.redo();
-    const next = filterHistory.current;
-    setRegistrySearch(next.search);
-    setRegistryFilter(next.filter);
-    setDepartmentFilter(next.dept);
-  }, [filterHistory, setRegistrySearch, setDepartmentFilter]);
-
   // Keyboard navigation handler
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -546,8 +528,7 @@ export default function MyndigheterV6() {
     setKeyboardIndex(-1);
   }, [registrySearch, registryFilter, departmentFilter]);
 
-  // Save filter state for undo/redo (kept for future use)
-  // eslint-disable-next-line no-unused-vars
+  // Save filter state for undo/redo
   const saveFilterState = useCallback(() => {
     filterHistory.push({
       search: registrySearch,
@@ -555,6 +536,24 @@ export default function MyndigheterV6() {
       dept: departmentFilter
     });
   }, [registrySearch, registryFilter, departmentFilter, filterHistory]);
+
+  // Handle undo
+  const handleUndo = useCallback(() => {
+    filterHistory.undo();
+    const prev = filterHistory.current;
+    setRegistrySearch(prev.search);
+    setRegistryFilter(prev.filter);
+    setDepartmentFilter(prev.dept);
+  }, [filterHistory, setRegistrySearch, setDepartmentFilter]);
+
+  // Handle redo
+  const handleRedo = useCallback(() => {
+    filterHistory.redo();
+    const next = filterHistory.current;
+    setRegistrySearch(next.search);
+    setRegistryFilter(next.filter);
+    setDepartmentFilter(next.dept);
+  }, [filterHistory, setRegistrySearch, setDepartmentFilter]);
 
   const [copyFeedback, setCopyFeedback] = useState(null);
   const ITEMS_PER_PAGE = 20;
@@ -863,6 +862,7 @@ export default function MyndigheterV6() {
             >
               {copyFeedback === agency.n ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             </button>
+            {agency.fteH && <Sparkline data={agency.fteH} color={deptColor} />}
             {agency.emp && (
               <span className="px-2 py-1 rounded-lg text-sm font-medium bg-emerald-50 text-emerald-700 flex items-center gap-1">
                 <Users className="w-3 h-3" />
@@ -1103,7 +1103,7 @@ export default function MyndigheterV6() {
       <div className="max-w-7xl mx-auto">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className={`text-2xl md:text-3xl ${headingStyle} flex items-center gap-3`}>
               <Building2 className="w-8 h-8 text-blue-600" />
@@ -1168,16 +1168,32 @@ export default function MyndigheterV6() {
           dissolvedCount={currentAgenciesData.filter(a => a.e).length}
         />
 
-        {/* Breadcrumbs removed - redundant with tab navigation */}
+        {/* FIX #20: Breadcrumbs */}
+        {breadcrumbs.length > 1 && (
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+            {breadcrumbs.map((crumb, i) => (
+              <React.Fragment key={crumb.view}>
+                {i > 0 && <ChevronRight className="w-4 h-4 text-gray-400" />}
+                <button
+                  onClick={() => navigate(crumb.view, crumb.label)}
+                  className={`hover:text-blue-600 ${i === breadcrumbs.length - 1 ? 'font-medium text-gray-900' : ''}`}
+                >
+                  {crumb.label}
+                </button>
+              </React.Fragment>
+            ))}
+          </div>
+        )}
 
         {/* FIX #18: Navigation med Lucide-ikoner */}
-        <div className={`${cardStyle} rounded-xl p-1.5 mb-4`}>
+        <div className={`${cardStyle} rounded-xl p-1.5 mb-6`}>
           <div className="flex gap-1 overflow-x-auto">
             {[
               { id: 'overview', label: 'Översikt', icon: BarChart3 },
               { id: 'departments', label: 'Departement', icon: Building2 },
               { id: 'regions', label: 'Regioner', icon: MapPin },
               { id: 'dashboard', label: 'KPI', icon: TrendingUp },
+              { id: 'compare', label: 'Jämför', icon: LineChartIcon },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -1197,11 +1213,11 @@ export default function MyndigheterV6() {
 
         {/* FIX #9: Regioner */}
         {activeView === 'regions' && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-6 animate-fade-in">
             {/* Nuvarande fördelning */}
-            <div className={`${cardStyle} rounded-xl p-4`}>
+            <div className={`${cardStyle} rounded-xl p-6`}>
               <h3 className={`${headingStyle} text-lg mb-4`}>Geografisk fördelning (nuvarande)</h3>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-6">
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -1241,7 +1257,7 @@ export default function MyndigheterV6() {
             </div>
 
             {/* Historisk regionfördelning */}
-            <div className={`${cardStyle} rounded-xl p-4`}>
+            <div className={`${cardStyle} rounded-xl p-6`}>
               <h3 className={`${headingStyle} text-lg mb-4`}>Historisk regionfördelning (1978-2025)</h3>
               <RegionHistoryChart
                 agencies={currentAgenciesData}
@@ -1257,7 +1273,7 @@ export default function MyndigheterV6() {
 
         {/* Dashboard med trendpilar (FIX #12) */}
         {activeView === 'dashboard' && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-6 animate-fade-in">
             {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
@@ -1285,25 +1301,25 @@ export default function MyndigheterV6() {
                   icon: Users
                 },
               ].map((stat, i) => (
-                <div key={i} className={`${cardStyle} rounded-xl p-3`}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <stat.icon className="w-4 h-4 text-primary-500" />
-                    <span className="text-xs text-neutral-500">{stat.label}</span>
-                    {stat.trend && <TrendArrow current={stat.trend.current} previous={stat.trend.previous} className="ml-auto" />}
+                <div key={i} className={`${cardStyle} rounded-xl p-5`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <stat.icon className="w-5 h-5 text-primary-500" />
+                    {stat.trend && <TrendArrow current={stat.trend.current} previous={stat.trend.previous} />}
                   </div>
                   <AnimatedNumber
                     value={stat.value}
                     suffix={stat.suffix || ''}
-                    className="text-2xl font-bold text-neutral-900"
+                    className="text-3xl font-bold text-neutral-900"
                   />
+                  <div className="text-sm text-neutral-600 mt-1">{stat.label}</div>
                 </div>
               ))}
             </div>
 
             {/* Ledningsform statistik */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* GD-statistik */}
-              <div className={`${cardStyle} rounded-xl p-4`}>
+              <div className={`${cardStyle} rounded-xl p-6`}>
                 <h3 className={`${headingStyle} text-lg mb-4`}>Ledning</h3>
                 <div className="space-y-4">
                   {(() => {
@@ -1349,7 +1365,7 @@ export default function MyndigheterV6() {
               </div>
 
               {/* Ledningsform pie chart */}
-              <div className={`${cardStyle} rounded-xl p-4`}>
+              <div className={`${cardStyle} rounded-xl p-6`}>
                 <h3 className={`${headingStyle} text-lg mb-4`}>Ledningsform</h3>
                 {(() => {
                   const strStats = activeAgencies.reduce((acc, a) => {
@@ -1404,9 +1420,9 @@ export default function MyndigheterV6() {
 
         {/* Departement */}
         {activeView === 'departments' && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-6 animate-fade-in">
             {/* Current distribution */}
-            <div className={`${cardStyle} rounded-xl p-4`}>
+            <div className={`${cardStyle} rounded-xl p-6`}>
               <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                 <h3 className={`${headingStyle} text-lg`}>Myndigheter per departement (nuvarande)</h3>
                 <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
@@ -1463,7 +1479,7 @@ export default function MyndigheterV6() {
             </div>
 
             {/* Historical department distribution */}
-            <div className={`${cardStyle} rounded-xl p-4`}>
+            <div className={`${cardStyle} rounded-xl p-6`}>
               <h3 className={`${headingStyle} text-lg mb-4`}>Historisk departementsfördelning (1978–2025)</h3>
               <DeptHistoryChart
                 agencies={currentAgenciesData}
@@ -1476,8 +1492,8 @@ export default function MyndigheterV6() {
 
         {/* Jämförelse */}
         {activeView === 'compare' && (
-          <div className="space-y-4 animate-fade-in">
-            <div className={`${cardStyle} rounded-xl p-4`}>
+          <div className="space-y-6 animate-fade-in">
+            <div className={`${cardStyle} rounded-xl p-6`}>
               <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                 <h3 className={headingStyle}>Jämför myndigheter (max 3)</h3>
                 {compareList.length > 0 && (
@@ -1504,8 +1520,9 @@ export default function MyndigheterV6() {
                       >
                         <X className="w-4 h-4 text-gray-400" />
                       </button>
-                      <h4 className="font-bold text-sm mb-2 pr-6">{a.n}</h4>
-                      <div className="space-y-2 text-sm">
+                      <h4 className="font-bold text-sm mb-3 pr-6">{a.n}</h4>
+                      {a.fteH && <Sparkline data={a.fteH} color={deptColors[a.d] || '#3b82f6'} height={30} />}
+                      <div className="space-y-2 text-sm mt-3">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Anställda</span>
                           <span className="font-bold text-emerald-600">{a.emp?.toLocaleString('sv-SE') || '–'}</span>
@@ -1535,7 +1552,7 @@ export default function MyndigheterV6() {
 
         {/* Översikt */}
         {activeView === 'overview' && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-6 animate-fade-in">
             {/* FIX #1: Fungerande slider */}
             <div className={`${cardStyle} rounded-xl p-4`}>
               <DualRangeSlider
@@ -1545,8 +1562,27 @@ export default function MyndigheterV6() {
                 onChange={setYearRange}
               />
               
-              {/* Kontroller - simplified */}
-              <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-gray-200">
+              {/* Kontroller */}
+              <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-200">
+                <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+                  {[
+                    { id: 'area', icon: TrendingUp },
+                    { id: 'line', icon: LineChartIcon },
+                    { id: 'bar', icon: BarChart3 }
+                  ].map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => setChartType(t.id)}
+                      className={`p-2 rounded-md min-w-[40px] min-h-[40px] flex items-center justify-center ${
+                        chartType === t.id ? 'bg-white shadow-sm' : 'hover:bg-gray-50'
+                      }`}
+                      aria-label={`Visa som ${t.id}`}
+                    >
+                      <t.icon className="w-4 h-4" />
+                    </button>
+                  ))}
+                </div>
+                
                 <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
                   {[{id:'count',label:'Antal'},{id:'emp',label:'Personal'}].map(m => (
                     <button
@@ -1614,7 +1650,7 @@ export default function MyndigheterV6() {
             </div>
 
             {/* Graf */}
-            <div className={`${cardStyle} rounded-xl p-4`}>
+            <div className={`${cardStyle} rounded-xl p-6`}>
               <h3 className={`${headingStyle} mb-4`}>
                 {normalizeData ? `Index (${yearRange[0]}=100)` : (chartMetric === 'emp' ? 'Antal anställda' : chartFilter === 'dissolved' ? 'Nedlagda myndigheter' : chartFilter === 'active' ? 'Aktiva myndigheter' : 'Antal myndigheter')} {yearRange[0]}–{isAnimating ? animationYear : yearRange[1]}
               </h3>
@@ -1754,7 +1790,7 @@ export default function MyndigheterV6() {
 
             {/* År-detaljer */}
             {selectedYear && (
-              <div className={`${cardStyle} rounded-xl p-4`}>
+              <div className={`${cardStyle} rounded-xl p-6`}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className={headingStyle}>{selectedYear}</h3>
                   <button 
@@ -1765,7 +1801,7 @@ export default function MyndigheterV6() {
                     <X className="w-5 h-5 text-gray-400" />
                   </button>
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <h4 className="text-sm font-medium text-emerald-600 mb-2 flex items-center gap-2">
                       <Check className="w-4 h-4" />
@@ -1801,7 +1837,7 @@ export default function MyndigheterV6() {
             )}
 
             {/* Könsfördelning - stapeldiagram */}
-            <div className={`${cardStyle} rounded-xl p-4`}>
+            <div className={`${cardStyle} rounded-xl p-6`}>
               <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                 <h3 className={`${headingStyle} text-lg flex items-center gap-2`}>
                   <Users className="w-5 h-5" />
@@ -2114,25 +2150,25 @@ export default function MyndigheterV6() {
                 </div>
               )}
 
-              {/* Pagination - compact */}
+              {/* Pagination */}
               {groupBy === 'none' && totalPages > 1 && (
-                <div className="p-2 border-t border-gray-200 flex items-center justify-center gap-2">
+                <div className="p-4 border-t border-gray-200 flex items-center justify-center gap-3">
                   <button
                     onClick={() => setRegistryPage(p => Math.max(1, p - 1))}
                     disabled={registryPage === 1}
-                    className="px-2 py-1 rounded text-xs disabled:opacity-40 bg-gray-100 hover:bg-gray-200"
+                    className="px-4 py-2 rounded-lg text-sm disabled:opacity-40 bg-gray-100 hover:bg-gray-200 min-h-[44px]"
                   >
-                    ←
+                    ← Föregående
                   </button>
-                  <span className="text-xs text-gray-500">
-                    {registryPage}/{totalPages}
+                  <span className="text-sm text-gray-600">
+                    Sida {registryPage} av {totalPages}
                   </span>
                   <button
                     onClick={() => setRegistryPage(p => Math.min(totalPages, p + 1))}
                     disabled={registryPage === totalPages}
-                    className="px-2 py-1 rounded text-xs disabled:opacity-40 bg-gray-100 hover:bg-gray-200"
+                    className="px-4 py-2 rounded-lg text-sm disabled:opacity-40 bg-gray-100 hover:bg-gray-200 min-h-[44px]"
                   >
-                    →
+                    Nästa →
                   </button>
                 </div>
               )}
@@ -2143,7 +2179,7 @@ export default function MyndigheterV6() {
         {/* FIX #14: FTE Info modal */}
         {showFteInfo && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowFteInfo(false)}>
-            <div className="bg-white rounded-xl p-4 max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-xl p-6 max-w-md" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className={headingStyle}>Vad är FTE?</h3>
                 <button onClick={() => setShowFteInfo(false)} className="p-2 rounded-lg hover:bg-gray-100">

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Area, BarChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceArea, Legend, ComposedChart, PieChart, Pie } from 'recharts';
-import { Search, Download, ChevronDown, X, Copy, Check, Play, Square, BarChart3, TrendingUp, Users, Building2, MapPin, Calendar, ExternalLink, Phone, Info, ArrowUp, ArrowDown, Minus, RefreshCw, Moon, Sun, Undo2, Redo2, Printer } from 'lucide-react';
+import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceArea, Legend, ComposedChart, PieChart, Pie } from 'recharts';
+import { Search, Download, ChevronDown, ChevronRight, X, Copy, Check, Play, Square, BarChart3, TrendingUp, LineChart as LineChartIcon, Users, Building2, MapPin, Calendar, ExternalLink, Phone, Info, ArrowUp, ArrowDown, Minus, RefreshCw } from 'lucide-react';
 
 // Import constants from separate file
 import {
@@ -13,45 +13,11 @@ import {
   agencyHistory
 } from './data/constants';
 
-// Import Sweden statistics for comparison
-import { getStatsByYear } from './data/swedenStats';
-
 // Import data fetching hook
 import { useAgencyData } from './hooks/useAgencyData';
 
 // Import loading states
 import { LoadingState, ErrorState } from './components/LoadingState';
-
-// Import IntroSection
-import IntroSection from './components/IntroSection';
-
-// Import SeriesSelector for multi-series graph
-import SeriesSelector, { normalizeSeriesData } from './components/SeriesSelector';
-
-// Import RegionHistoryChart for historical region data
-import RegionHistoryChart from './components/RegionHistoryChart';
-
-// Import DeptHistoryChart for historical department data
-import DeptHistoryChart from './components/DeptHistoryChart';
-
-// Helper function to get short department names (for UI display)
-const getShortDeptName = (dept) => {
-  if (!dept) return '';
-  const shortNames = {
-    'Justitiedepartementet': 'Justitie',
-    'Finansdepartementet': 'Finans',
-    'Utbildningsdepartementet': 'Utbildning',
-    'Socialdepartementet': 'Social',
-    'Klimat- och näringslivsdepartementet': 'Klimat & Näringsliv',
-    'Kulturdepartementet': 'Kultur',
-    'Försvarsdepartementet': 'Försvar',
-    'Arbetsmarknadsdepartementet': 'Arbetsmarknad',
-    'Landsbygds- och infrastrukturdepartementet': 'Landsbygd & Infra',
-    'Utrikesdepartementet': 'Utrikes',
-    'Statsrådsberedningen': 'Statsrådsberedningen'
-  };
-  return shortNames[dept] || dept.replace('departementet', '').trim();
-};
 
 // Animerad siffra med cleanup (FIX #4)
 const AnimatedNumber = ({ value, duration = 400, prefix = '', suffix = '', className = '' }) => {
@@ -118,47 +84,6 @@ const Sparkline = ({ data, color = '#3b82f6', height = 24 }) => {
 // Loading skeleton
 const Skeleton = ({ className = '' }) => (
   <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
-);
-
-// Skeleton for agency list row
-const SkeletonAgencyRow = () => (
-  <div className="p-4 border-b border-gray-100 animate-pulse">
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex-1">
-        <div className="h-5 bg-gray-200 rounded w-3/4 mb-2" />
-        <div className="h-4 bg-gray-100 rounded w-1/2" />
-      </div>
-      <div className="w-20 h-8 bg-gray-200 rounded" />
-    </div>
-  </div>
-);
-
-// Skeleton for chart area
-const SkeletonChart = ({ height = 300 }) => (
-  <div className="animate-pulse">
-    <div className="flex items-end gap-2" style={{ height }}>
-      {[...Array(12)].map((_, i) => (
-        <div
-          key={i}
-          className="flex-1 bg-gray-200 rounded-t"
-          style={{ height: `${Math.random() * 60 + 40}%` }}
-        />
-      ))}
-    </div>
-    <div className="flex justify-between mt-2">
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="h-3 w-10 bg-gray-100 rounded" />
-      ))}
-    </div>
-  </div>
-);
-
-// Skeleton for stats card
-const SkeletonStatCard = () => (
-  <div className="rounded-xl bg-white shadow-sm border border-gray-100 p-5 animate-pulse">
-    <div className="h-8 bg-gray-200 rounded w-1/2 mb-2" />
-    <div className="h-4 bg-gray-100 rounded w-1/3" />
-  </div>
 );
 
 // FIX #1: Fungerande dual range slider
@@ -283,7 +208,7 @@ const useUrlState = (key, defaultValue) => {
       return urlValue;
     }
   });
-
+  
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (JSON.stringify(value) === JSON.stringify(defaultValue)) {
@@ -294,65 +219,8 @@ const useUrlState = (key, defaultValue) => {
     const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
     window.history.replaceState({}, '', newUrl);
   }, [key, value, defaultValue]);
-
+  
   return [value, setValue];
-};
-
-// Dark mode hook with localStorage persistence
-const useDarkMode = () => {
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    const saved = localStorage.getItem('darkMode');
-    if (saved !== null) return JSON.parse(saved);
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(isDark));
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDark]);
-
-  return [isDark, setIsDark];
-};
-
-// Filter history hook for undo/redo
-const useFilterHistory = (initialState) => {
-  const [history, setHistory] = useState([initialState]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const current = history[currentIndex];
-
-  const push = useCallback((newState) => {
-    setHistory(prev => {
-      const newHistory = prev.slice(0, currentIndex + 1);
-      newHistory.push(newState);
-      // Limit history to 20 items
-      if (newHistory.length > 20) newHistory.shift();
-      return newHistory;
-    });
-    setCurrentIndex(prev => Math.min(prev + 1, 19));
-  }, [currentIndex]);
-
-  const undo = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-    }
-  }, [currentIndex]);
-
-  const redo = useCallback(() => {
-    if (currentIndex < history.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    }
-  }, [currentIndex, history.length]);
-
-  const canUndo = currentIndex > 0;
-  const canRedo = currentIndex < history.length - 1;
-
-  return { current, push, undo, redo, canUndo, canRedo };
 };
 
 // FIX #24: Virtualiserad lista
@@ -393,12 +261,6 @@ export default function MyndigheterV6() {
   // Use external data (no fallback - data is fetched from civictechsweden/myndighetsdata)
   const currentAgenciesData = externalData || [];
 
-  // Dark mode
-  const [isDarkMode, setIsDarkMode] = useDarkMode();
-
-  // Filter history for undo/redo
-  const filterHistory = useFilterHistory({ search: '', filter: 'all', dept: 'all' });
-
   // FIX #29: URL-baserad state för delning
   const [activeView, setActiveView] = useUrlState('view', 'overview');
   const [yearRange, setYearRange] = useUrlState('years', [1978, 2025]);
@@ -409,25 +271,9 @@ export default function MyndigheterV6() {
   const [showGovernments, setShowGovernments] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Keyboard navigation state
-  const [keyboardIndex, setKeyboardIndex] = useState(-1);
-
   const [chartType, setChartType] = useState('area');
   const [chartMetric, setChartMetric] = useState('count');
-  const [chartFilter, setChartFilter] = useState('all'); // 'all', 'active', 'dissolved'
-  // Multi-series support: which series are active
-  const [activeSeries, setActiveSeries] = useState({
-    agencies: true,
-    employees: false,
-    population: false,
-    gdp: false,
-    women: false,
-    men: false
-  });
-  const [normalizeData, setNormalizeData] = useState(false);
-  // Backwards compatibility
-  const showPopulation = activeSeries.population;
-  const showGDP = activeSeries.gdp;
+  const [showDissolved, setShowDissolved] = useState(false);
   const [deptSortBy, setDeptSortBy] = useState('count');
   const [selectedYear, setSelectedYear] = useState(null);
   const [selectedDept, setSelectedDept] = useState(null);
@@ -476,86 +322,7 @@ export default function MyndigheterV6() {
   const handleMouseLeave = useCallback(() => {
     setTooltipAgency(null);
   }, []);
-
-  // Handle undo - MUST be defined before useEffect that uses it
-  const handleUndo = useCallback(() => {
-    filterHistory.undo();
-    const prev = filterHistory.current;
-    setRegistrySearch(prev.search);
-    setRegistryFilter(prev.filter);
-    setDepartmentFilter(prev.dept);
-  }, [filterHistory, setRegistrySearch, setDepartmentFilter]);
-
-  // Handle redo - MUST be defined before useEffect that uses it
-  const handleRedo = useCallback(() => {
-    filterHistory.redo();
-    const next = filterHistory.current;
-    setRegistrySearch(next.search);
-    setRegistryFilter(next.filter);
-    setDepartmentFilter(next.dept);
-  }, [filterHistory, setRegistrySearch, setDepartmentFilter]);
-
-  // Keyboard navigation handler
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Handle Ctrl+Z for undo (works globally)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        if (filterHistory.canUndo) handleUndo();
-        return;
-      }
-      // Handle Ctrl+Y or Ctrl+Shift+Z for redo (works globally)
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
-        e.preventDefault();
-        if (filterHistory.canRedo) handleRedo();
-        return;
-      }
-
-      // Only handle keyboard nav when registry is open
-      if (!showRegistry) return;
-
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault();
-          setKeyboardIndex(prev => Math.min(prev + 1, paginatedAgencies.length - 1));
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setKeyboardIndex(prev => Math.max(prev - 1, 0));
-          break;
-        case 'Enter':
-          if (keyboardIndex >= 0 && paginatedAgencies[keyboardIndex]) {
-            setSelectedAgency(paginatedAgencies[keyboardIndex]);
-          }
-          break;
-        case 'Escape':
-          setSelectedAgency(null);
-          setKeyboardIndex(-1);
-          break;
-        default:
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showRegistry, keyboardIndex, filterHistory, handleUndo, handleRedo]);
-
-  // Reset keyboard index when filters change
-  useEffect(() => {
-    setKeyboardIndex(-1);
-  }, [registrySearch, registryFilter, departmentFilter]);
-
-  // Save filter state for undo/redo (kept for future use)
-  // eslint-disable-next-line no-unused-vars
-  const saveFilterState = useCallback(() => {
-    filterHistory.push({
-      search: registrySearch,
-      filter: registryFilter,
-      dept: departmentFilter
-    });
-  }, [registrySearch, registryFilter, departmentFilter, filterHistory]);
-
+  
   const [copyFeedback, setCopyFeedback] = useState(null);
   const ITEMS_PER_PAGE = 20;
   
@@ -793,9 +560,9 @@ export default function MyndigheterV6() {
     setRegistryPage(1);
   }, [registrySearch, registryFilter, departmentFilter, registrySort, selectedDept]);
 
-  // Design system styles - using CSS classes from index.css
-  const cardStyle = 'card'; // Uses .card class with proper shadows and borders
-  const headingStyle = 'font-serif font-semibold text-neutral-900'; // Source Serif 4 for headings
+  // FIX #15 & #17: Bättre kontrast, inga gradient-text
+  const cardStyle = 'bg-white border border-gray-200 shadow-sm';
+  const headingStyle = 'font-bold text-gray-900';
 
   // Render agency row
   const renderAgencyRow = (agency, index) => {
@@ -833,9 +600,9 @@ export default function MyndigheterV6() {
               )}
             </div>
             {agency.d && (
-              <div className="text-xs text-gray-500 mt-1 flex items-center gap-1" title={agency.d}>
+              <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                 <Building2 className="w-3 h-3" />
-                {getShortDeptName(agency.d)}
+                {agency.d.replace('departementet', '').trim()}
               </div>
             )}
           </div>
@@ -863,6 +630,7 @@ export default function MyndigheterV6() {
             >
               {copyFeedback === agency.n ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             </button>
+            {agency.fteH && <Sparkline data={agency.fteH} color={deptColor} />}
             {agency.emp && (
               <span className="px-2 py-1 rounded-lg text-sm font-medium bg-emerald-50 text-emerald-700 flex items-center gap-1">
                 <Users className="w-3 h-3" />
@@ -938,32 +706,10 @@ export default function MyndigheterV6() {
             
             {/* Info grid */}
             <div className="grid grid-cols-2 gap-3 text-sm">
-              {agency.org && (
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500">Org.nr:</span>
-                  <span className="font-medium font-mono">{agency.org}</span>
-                </div>
-              )}
               {agency.str && (
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-500">Ledningsform:</span>
-                  <span className={`badge ${agency.str === 'Styrelse' ? 'badge-primary' : 'bg-neutral-100 text-neutral-700'}`}>
-                    {agency.str}
-                  </span>
-                </div>
-              )}
-              {agency.gd !== undefined && (
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500">GD:</span>
-                  {agency.gd ? (
-                    <span className="badge badge-success">
-                      Generaldirektör
-                    </span>
-                  ) : (
-                    <span className="badge bg-neutral-100 text-neutral-500">
-                      Nej
-                    </span>
-                  )}
+                  <span className="text-gray-500">Struktur:</span>
+                  <span className="font-medium">{agency.str}</span>
                 </div>
               )}
               {agency.cof && (
@@ -972,52 +718,25 @@ export default function MyndigheterV6() {
                   <span className="font-medium">{cofogNames[agency.cof]}</span>
                 </div>
               )}
+              {agency.city && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <span>{agency.city}</span>
+                </div>
+              )}
               {agency.s && (
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <span>Bildad {agency.s.split('-')[0]}</span>
                 </div>
               )}
-              {agency.e && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-red-400" />
-                  <span className="text-red-600">Nedlagd {agency.e.split('-')[0]}</span>
-                </div>
-              )}
-              {agency.sfs && (
-                <div className="flex items-center gap-2 col-span-2">
-                  <span className="text-gray-500">SFS:</span>
-                  <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{agency.sfs}</span>
-                </div>
-              )}
             </div>
-
-            {/* Adress */}
-            {(agency.addr || agency.city) && (
-              <div className="p-3 rounded-lg bg-gray-50 text-sm">
-                <div className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    {agency.addr ? (
-                      <span>{agency.addr}</span>
-                    ) : agency.city && (
-                      <span>{agency.city}</span>
-                    )}
-                    {agency.post && agency.post !== agency.addr && (
-                      <div className="text-gray-500 text-xs mt-1">
-                        Postadress: {agency.post}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Kontaktlänkar */}
-            {(agency.tel || agency.email || agency.web || agency.wiki) && (
+            
+            {/* Kontakt */}
+            {(agency.tel || agency.web) && (
               <div className="flex flex-wrap gap-2">
                 {agency.tel && (
-                  <a
+                  <a 
                     href={`tel:${agency.tel}`}
                     className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm flex items-center gap-2 min-h-[44px]"
                     onClick={e => e.stopPropagation()}
@@ -1026,18 +745,8 @@ export default function MyndigheterV6() {
                     {agency.tel}
                   </a>
                 )}
-                {agency.email && (
-                  <a
-                    href={`mailto:${agency.email}`}
-                    className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm flex items-center gap-2 min-h-[44px]"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    📧
-                    <span className="truncate max-w-[180px]">{agency.email}</span>
-                  </a>
-                )}
                 {agency.web && (
-                  <a
+                  <a 
                     href={agency.web.startsWith('http') ? agency.web : `https://${agency.web}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -1046,17 +755,6 @@ export default function MyndigheterV6() {
                   >
                     <ExternalLink className="w-4 h-4" />
                     Webbplats
-                  </a>
-                )}
-                {agency.wiki && (
-                  <a
-                    href={agency.wiki}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm flex items-center gap-2 min-h-[44px]"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    📖 Wikipedia
                   </a>
                 )}
               </div>
@@ -1103,7 +801,7 @@ export default function MyndigheterV6() {
       <div className="max-w-7xl mx-auto">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className={`text-2xl md:text-3xl ${headingStyle} flex items-center gap-3`}>
               <Building2 className="w-8 h-8 text-blue-600" />
@@ -1119,65 +817,52 @@ export default function MyndigheterV6() {
               )}
             </p>
           </div>
-          <div className="flex gap-2 self-start sm:self-auto flex-wrap">
-            {/* Dark mode toggle */}
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="px-3 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium flex items-center gap-2 min-h-[44px] focus-visible-ring"
-              title={isDarkMode ? 'Ljust tema' : 'Mörkt tema'}
-              aria-label={isDarkMode ? 'Byt till ljust tema' : 'Byt till mörkt tema'}
-            >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-
-            {/* Print button */}
-            <button
-              onClick={() => window.print()}
-              className="px-3 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium flex items-center gap-2 min-h-[44px] no-print focus-visible-ring"
-              title="Skriv ut"
-              aria-label="Skriv ut sidan"
-            >
-              <Printer className="w-4 h-4" />
-            </button>
-
-            {/* Refresh */}
+          <div className="flex gap-2 self-start sm:self-auto">
             <button
               onClick={refreshData}
               disabled={dataLoading}
-              className="px-3 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium flex items-center gap-2 min-h-[44px] disabled:opacity-50 no-print focus-visible-ring"
+              className="px-3 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium flex items-center gap-2 min-h-[44px] disabled:opacity-50"
               title="Uppdatera data från extern källa"
             >
               <RefreshCw className={`w-4 h-4 ${dataLoading ? 'animate-spin' : ''}`} />
             </button>
-
-            {/* Export */}
             <button
               onClick={exportCSV}
-              className="px-4 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium flex items-center gap-2 min-h-[44px] no-print focus-visible-ring"
+              className="px-4 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium flex items-center gap-2 min-h-[44px]"
             >
               <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Exportera CSV</span>
+              Exportera CSV
             </button>
           </div>
         </div>
 
-        {/* Intro Section - collapsible with localStorage persistence */}
-        <IntroSection
-          agencyCount={currentAgenciesData.length}
-          activeCount={activeAgencies.length}
-          dissolvedCount={currentAgenciesData.filter(a => a.e).length}
-        />
-
-        {/* Breadcrumbs removed - redundant with tab navigation */}
+        {/* FIX #20: Breadcrumbs */}
+        {breadcrumbs.length > 1 && (
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+            {breadcrumbs.map((crumb, i) => (
+              <React.Fragment key={crumb.view}>
+                {i > 0 && <ChevronRight className="w-4 h-4 text-gray-400" />}
+                <button
+                  onClick={() => navigate(crumb.view, crumb.label)}
+                  className={`hover:text-blue-600 ${i === breadcrumbs.length - 1 ? 'font-medium text-gray-900' : ''}`}
+                >
+                  {crumb.label}
+                </button>
+              </React.Fragment>
+            ))}
+          </div>
+        )}
 
         {/* FIX #18: Navigation med Lucide-ikoner */}
-        <div className={`${cardStyle} rounded-xl p-1.5 mb-4`}>
+        <div className={`${cardStyle} rounded-xl p-1.5 mb-6`}>
           <div className="flex gap-1 overflow-x-auto">
             {[
               { id: 'overview', label: 'Översikt', icon: BarChart3 },
               { id: 'departments', label: 'Departement', icon: Building2 },
               { id: 'regions', label: 'Regioner', icon: MapPin },
+              { id: 'gender', label: 'Kön', icon: Users },
               { id: 'dashboard', label: 'KPI', icon: TrendingUp },
+              { id: 'compare', label: 'Jämför', icon: LineChartIcon },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -1197,222 +882,102 @@ export default function MyndigheterV6() {
 
         {/* FIX #9: Regioner */}
         {activeView === 'regions' && (
-          <div className="space-y-4 animate-fade-in">
-            {/* Nuvarande fördelning */}
-            <div className={`${cardStyle} rounded-xl p-4`}>
-              <h3 className={`${headingStyle} text-lg mb-4`}>Geografisk fördelning (nuvarande)</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={regionStats}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}`}
-                    >
-                      {regionStats.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="space-y-3">
-                  {regionStats.map(r => (
-                    <div key={r.name} className="flex items-center justify-between p-3 rounded-lg bg-neutral-50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-4 h-4 rounded" style={{ backgroundColor: r.color }} />
-                        <span className="font-medium">{r.name}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-bold text-lg">{r.value}</span>
-                        <span className="text-neutral-500 text-sm ml-1">({Math.round(r.value / activeAgencies.length * 100)}%)</span>
-                      </div>
+          <div className={`${cardStyle} rounded-xl p-6`}>
+            <h3 className={`${headingStyle} text-lg mb-4`}>Geografisk fördelning</h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={regionStats}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {regionStats.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-3">
+                {regionStats.map(r => (
+                  <div key={r.name} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: r.color }} />
+                      <span className="font-medium">{r.name}</span>
                     </div>
-                  ))}
-                </div>
+                    <div className="text-right">
+                      <span className="font-bold text-lg">{r.value}</span>
+                      <span className="text-gray-500 text-sm ml-1">({Math.round(r.value / activeAgencies.length * 100)}%)</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <p className="text-sm text-neutral-500 mt-4">
-                <Info className="w-4 h-4 inline mr-1" />
-                Majoriteten av myndigheterna är lokaliserade i Stockholmsområdet. Regeringen har en uttalad ambition att sprida statliga jobb i landet.
-              </p>
             </div>
-
-            {/* Historisk regionfördelning */}
-            <div className={`${cardStyle} rounded-xl p-4`}>
-              <h3 className={`${headingStyle} text-lg mb-4`}>Historisk regionfördelning (1978-2025)</h3>
-              <RegionHistoryChart
-                agencies={currentAgenciesData}
-                yearRange={[1978, 2025]}
-              />
-              <p className="text-sm text-neutral-500 mt-4">
-                <Info className="w-4 h-4 inline mr-1" />
-                Diagrammet visar hur myndigheter geografiskt fördelats över tid baserat på deras huvudsäte.
-              </p>
-            </div>
+            <p className="text-sm text-gray-500 mt-4">
+              <Info className="w-4 h-4 inline mr-1" />
+              Majoriteten av myndigheterna är lokaliserade i Stockholmsområdet. Regeringen har en uttalad ambition att sprida statliga jobb i landet.
+            </p>
           </div>
         )}
 
         {/* Dashboard med trendpilar (FIX #12) */}
         {activeView === 'dashboard' && (
-          <div className="space-y-4 animate-fade-in">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                {
-                  label: 'Aktiva myndigheter',
-                  value: activeAgencies.length,
-                  icon: Building2,
-                  trend: dashboardStats.countTrend
-                },
-                {
-                  label: 'Anställda totalt',
-                  value: dashboardStats.totalEmp,
-                  icon: Users,
-                  trend: dashboardStats.empTrend
-                },
-                {
-                  label: 'Snitt per myndighet',
-                  value: dashboardStats.avgEmp,
-                  icon: TrendingUp
-                },
-                {
-                  label: 'Andel kvinnor',
-                  value: dashboardStats.pctWomen,
-                  suffix: '%',
-                  icon: Users
-                },
-              ].map((stat, i) => (
-                <div key={i} className={`${cardStyle} rounded-xl p-3`}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <stat.icon className="w-4 h-4 text-primary-500" />
-                    <span className="text-xs text-neutral-500">{stat.label}</span>
-                    {stat.trend && <TrendArrow current={stat.trend.current} previous={stat.trend.previous} className="ml-auto" />}
-                  </div>
-                  <AnimatedNumber
-                    value={stat.value}
-                    suffix={stat.suffix || ''}
-                    className="text-2xl font-bold text-neutral-900"
-                  />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { 
+                label: 'Aktiva myndigheter', 
+                value: activeAgencies.length, 
+                icon: Building2,
+                trend: dashboardStats.countTrend
+              },
+              { 
+                label: 'Anställda totalt', 
+                value: dashboardStats.totalEmp, 
+                icon: Users,
+                trend: dashboardStats.empTrend
+              },
+              { 
+                label: 'Snitt per myndighet', 
+                value: dashboardStats.avgEmp, 
+                icon: TrendingUp 
+              },
+              { 
+                label: 'Andel kvinnor', 
+                value: dashboardStats.pctWomen, 
+                suffix: '%', 
+                icon: Users 
+              },
+            ].map((stat, i) => (
+              <div key={i} className={`${cardStyle} rounded-xl p-5`}>
+                <div className="flex items-center justify-between mb-2">
+                  <stat.icon className="w-5 h-5 text-blue-600" />
+                  {stat.trend && <TrendArrow current={stat.trend.current} previous={stat.trend.previous} />}
                 </div>
-              ))}
-            </div>
-
-            {/* Ledningsform statistik */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* GD-statistik */}
-              <div className={`${cardStyle} rounded-xl p-4`}>
-                <h3 className={`${headingStyle} text-lg mb-4`}>Ledning</h3>
-                <div className="space-y-4">
-                  {(() => {
-                    const withGD = activeAgencies.filter(a => a.gd === true).length;
-                    const withoutGD = activeAgencies.filter(a => a.gd === false).length;
-                    const unknownGD = activeAgencies.filter(a => a.gd === undefined).length;
-                    const total = activeAgencies.length;
-                    return (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <span className="text-neutral-600">Med generaldirektör</span>
-                          <div className="flex items-center gap-3">
-                            <div className="w-32 h-2 bg-neutral-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(withGD / total) * 100}%` }} />
-                            </div>
-                            <span className="font-semibold text-emerald-600 w-12 text-right">{withGD}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-neutral-600">Utan GD</span>
-                          <div className="flex items-center gap-3">
-                            <div className="w-32 h-2 bg-neutral-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-neutral-400 rounded-full" style={{ width: `${(withoutGD / total) * 100}%` }} />
-                            </div>
-                            <span className="font-semibold text-neutral-500 w-12 text-right">{withoutGD}</span>
-                          </div>
-                        </div>
-                        {unknownGD > 0 && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-neutral-600">Okänt</span>
-                            <div className="flex items-center gap-3">
-                              <div className="w-32 h-2 bg-neutral-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-neutral-200 rounded-full" style={{ width: `${(unknownGD / total) * 100}%` }} />
-                              </div>
-                              <span className="font-semibold text-neutral-400 w-12 text-right">{unknownGD}</span>
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
+                <AnimatedNumber 
+                  value={stat.value} 
+                  suffix={stat.suffix || ''} 
+                  className="text-3xl font-bold text-gray-900" 
+                />
+                <div className="text-sm text-gray-600 mt-1">{stat.label}</div>
               </div>
-
-              {/* Ledningsform pie chart */}
-              <div className={`${cardStyle} rounded-xl p-4`}>
-                <h3 className={`${headingStyle} text-lg mb-4`}>Ledningsform</h3>
-                {(() => {
-                  const strStats = activeAgencies.reduce((acc, a) => {
-                    const key = a.str || 'Okänd';
-                    acc[key] = (acc[key] || 0) + 1;
-                    return acc;
-                  }, {});
-                  const pieData = Object.entries(strStats).map(([name, value]) => ({
-                    name,
-                    value,
-                    fill: name === 'Styrelse' ? '#0c80f0' : name === 'Enrådighet' ? '#059669' : '#78716c'
-                  }));
-                  return (
-                    <div className="flex items-center gap-4">
-                      <ResponsiveContainer width={150} height={150}>
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            dataKey="value"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={40}
-                            outerRadius={65}
-                            paddingAngle={2}
-                          >
-                            {pieData.map((entry, idx) => (
-                              <Cell key={idx} fill={entry.fill} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(v) => [`${v} myndigheter`, '']} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="flex-1 space-y-2">
-                        {pieData.map((item, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: item.fill }} />
-                              <span className="text-neutral-700">{item.name}</span>
-                            </div>
-                            <span className="font-semibold">{item.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
+            ))}
           </div>
         )}
 
         {/* Departement */}
         {activeView === 'departments' && (
-          <div className="space-y-4 animate-fade-in">
-            {/* Current distribution */}
-            <div className={`${cardStyle} rounded-xl p-4`}>
+          <div className="space-y-6">
+            <div className={`${cardStyle} rounded-xl p-6`}>
               <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                <h3 className={`${headingStyle} text-lg`}>Myndigheter per departement (nuvarande)</h3>
+                <h3 className={`${headingStyle} text-lg`}>Myndigheter per departement</h3>
                 <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
                   {[{id:'count',label:'Antal'},{id:'emp',label:'Anställda'},{id:'alpha',label:'A–Ö'}].map(s => (
-                    <button
-                      key={s.id}
+                    <button 
+                      key={s.id} 
                       onClick={() => setDeptSortBy(s.id)}
                       className={`px-3 py-2 rounded-md text-sm font-medium min-h-[40px] ${
                         deptSortBy === s.id ? 'bg-white shadow-sm' : 'hover:bg-gray-50'
@@ -1424,8 +989,8 @@ export default function MyndigheterV6() {
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={400}>
-                <BarChart
-                  data={departmentStats}
+                <BarChart 
+                  data={departmentStats} 
                   layout="vertical"
                   onClick={(e) => {
                     if (e?.activePayload) {
@@ -1436,20 +1001,19 @@ export default function MyndigheterV6() {
                 >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis type="number" tickFormatter={deptSortBy === 'emp' ? (v => `${(v/1000).toFixed(0)}k`) : undefined} />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    width={200}
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={getShortDeptName}
+                  <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    width={180} 
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={n => n.replace('departementet', '').trim()}
                   />
-                  <Tooltip
+                  <Tooltip 
                     formatter={(v) => [deptSortBy === 'emp' ? v.toLocaleString('sv-SE') : v, deptSortBy === 'emp' ? 'Anställda' : 'Myndigheter']}
-                    labelFormatter={(name) => name} // Show full department name
-                    contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', maxWidth: '300px' }}
+                    contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                   />
-                  <Bar
-                    dataKey={deptSortBy === 'emp' ? 'emp' : 'count'}
+                  <Bar 
+                    dataKey={deptSortBy === 'emp' ? 'emp' : 'count'} 
                     radius={[0, 4, 4, 0]}
                     cursor="pointer"
                   >
@@ -1461,23 +1025,52 @@ export default function MyndigheterV6() {
               </ResponsiveContainer>
               <p className="text-sm text-gray-500 text-center mt-2">Klicka på ett departement för att se dess myndigheter</p>
             </div>
+          </div>
+        )}
 
-            {/* Historical department distribution */}
-            <div className={`${cardStyle} rounded-xl p-4`}>
-              <h3 className={`${headingStyle} text-lg mb-4`}>Historisk departementsfördelning (1978–2025)</h3>
-              <DeptHistoryChart
-                agencies={currentAgenciesData}
-                yearRange={[1978, 2025]}
-              />
+        {/* Könsfördelning */}
+        {activeView === 'gender' && (
+          <div className={`${cardStyle} rounded-xl p-6`}>
+            <h3 className={`${headingStyle} text-lg mb-4`}>Könsfördelning i staten 1990–2024</h3>
+            <ResponsiveContainer width="100%" height={350}>
+              <AreaChart data={genderHistoryData}>
+                <defs>
+                  <linearGradient id="colorW" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorM" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <XAxis dataKey="year" tick={{ fontSize: 12 }} />
+                <YAxis tickFormatter={v => `${(v/1000).toFixed(0)}k`} tick={{ fontSize: 12 }} />
+                <Tooltip 
+                  formatter={(v, n) => [v.toLocaleString('sv-SE'), n === 'w' ? 'Kvinnor' : 'Män']}
+                  contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                />
+                <Area type="monotone" dataKey="w" name="Kvinnor" stroke="#ec4899" strokeWidth={2} fill="url(#colorW)" />
+                <Area type="monotone" dataKey="m" name="Män" stroke="#3b82f6" strokeWidth={2} fill="url(#colorM)" />
+                <Legend />
+                <ReferenceArea y1={118000} y2={122000} fill="#10b981" fillOpacity={0.1} />
+              </AreaChart>
+            </ResponsiveContainer>
+            <div className="mt-4 p-4 rounded-lg bg-emerald-50 border border-emerald-200">
+              <p className="text-sm text-emerald-800">
+                <strong>2008:</strong> Jämställdhet uppnåddes – för första gången var könsfördelningen 50/50 i staten.
+                <br />
+                <strong>2024:</strong> 53,1% kvinnor bland statligt anställda.
+              </p>
             </div>
           </div>
         )}
 
-
         {/* Jämförelse */}
         {activeView === 'compare' && (
-          <div className="space-y-4 animate-fade-in">
-            <div className={`${cardStyle} rounded-xl p-4`}>
+          <div className="space-y-6">
+            <div className={`${cardStyle} rounded-xl p-6`}>
               <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                 <h3 className={headingStyle}>Jämför myndigheter (max 3)</h3>
                 {compareList.length > 0 && (
@@ -1504,8 +1097,9 @@ export default function MyndigheterV6() {
                       >
                         <X className="w-4 h-4 text-gray-400" />
                       </button>
-                      <h4 className="font-bold text-sm mb-2 pr-6">{a.n}</h4>
-                      <div className="space-y-2 text-sm">
+                      <h4 className="font-bold text-sm mb-3 pr-6">{a.n}</h4>
+                      {a.fteH && <Sparkline data={a.fteH} color={deptColors[a.d] || '#3b82f6'} height={30} />}
+                      <div className="space-y-2 text-sm mt-3">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Anställda</span>
                           <span className="font-bold text-emerald-600">{a.emp?.toLocaleString('sv-SE') || '–'}</span>
@@ -1535,7 +1129,7 @@ export default function MyndigheterV6() {
 
         {/* Översikt */}
         {activeView === 'overview' && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-6">
             {/* FIX #1: Fungerande slider */}
             <div className={`${cardStyle} rounded-xl p-4`}>
               <DualRangeSlider
@@ -1545,8 +1139,27 @@ export default function MyndigheterV6() {
                 onChange={setYearRange}
               />
               
-              {/* Kontroller - simplified */}
-              <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-gray-200">
+              {/* Kontroller */}
+              <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-200">
+                <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+                  {[
+                    { id: 'area', icon: TrendingUp },
+                    { id: 'line', icon: LineChartIcon },
+                    { id: 'bar', icon: BarChart3 }
+                  ].map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => setChartType(t.id)}
+                      className={`p-2 rounded-md min-w-[40px] min-h-[40px] flex items-center justify-center ${
+                        chartType === t.id ? 'bg-white shadow-sm' : 'hover:bg-gray-50'
+                      }`}
+                      aria-label={`Visa som ${t.id}`}
+                    >
+                      <t.icon className="w-4 h-4" />
+                    </button>
+                  ))}
+                </div>
+                
                 <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
                   {[{id:'count',label:'Antal'},{id:'emp',label:'Personal'}].map(m => (
                     <button
@@ -1583,109 +1196,48 @@ export default function MyndigheterV6() {
                   <span className="text-lg font-bold text-blue-600">{animationYear}</span>
                 )}
                 
-                {/* Filter: Alla / Aktiva / Nedlagda */}
-                <div className="flex gap-1 bg-gray-100 p-1 rounded-lg ml-auto">
-                  {[{id:'all',label:'Alla'},{id:'active',label:'Aktiva'},{id:'dissolved',label:'Nedlagda'}].map(f => (
-                    <button
-                      key={f.id}
-                      onClick={() => setChartFilter(f.id)}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                        chartFilter === f.id
-                          ? f.id === 'dissolved' ? 'bg-red-500 text-white shadow-sm' : 'bg-white shadow-sm'
-                          : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Multi-series selector with normalization option */}
-              <div className="mt-3 pt-3 border-t border-neutral-200">
-                <SeriesSelector
-                  activeSeries={activeSeries}
-                  setActiveSeries={setActiveSeries}
-                  normalizeData={normalizeData}
-                  setNormalizeData={setNormalizeData}
-                  baseYear={yearRange[0]}
-                />
+                <label className="flex items-center gap-2 cursor-pointer ml-auto">
+                  <input 
+                    type="checkbox" 
+                    checked={showDissolved} 
+                    onChange={e => setShowDissolved(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm text-gray-700">Visa nedlagda</span>
+                </label>
               </div>
             </div>
 
             {/* Graf */}
-            <div className={`${cardStyle} rounded-xl p-4`}>
+            <div className={`${cardStyle} rounded-xl p-6`}>
               <h3 className={`${headingStyle} mb-4`}>
-                {normalizeData ? `Index (${yearRange[0]}=100)` : (chartMetric === 'emp' ? 'Antal anställda' : chartFilter === 'dissolved' ? 'Nedlagda myndigheter' : chartFilter === 'active' ? 'Aktiva myndigheter' : 'Antal myndigheter')} {yearRange[0]}–{isAnimating ? animationYear : yearRange[1]}
+                {chartMetric === 'emp' ? 'Antal anställda' : 'Antal myndigheter'} {yearRange[0]}–{isAnimating ? animationYear : yearRange[1]}
               </h3>
-              <ResponsiveContainer width="100%" height={Object.values(activeSeries).filter(Boolean).length > 1 ? 400 : 300}>
-                <ComposedChart
-                  data={(() => {
-                    // Combine all data sources
-                    let chartData = timeSeriesData
-                      .filter(d => d.year >= yearRange[0] && d.year <= (isAnimating ? animationYear : yearRange[1]))
-                      .map(d => {
-                        const swedenData = getStatsByYear(d.year);
-                        const genderData = genderHistoryData.find(g => g.year === d.year);
-                        return {
-                          ...d,
-                          population: swedenData?.population,
-                          gdp: swedenData?.gdp,
-                          w: genderData?.w,
-                          m: genderData?.m
-                        };
-                      });
-
-                    // Normalize if enabled
-                    if (normalizeData) {
-                      chartData = normalizeSeriesData(chartData, activeSeries, yearRange[0]);
-                    }
-                    return chartData;
-                  })()}
+              <ResponsiveContainer width="100%" height={300}>
+                <ComposedChart 
+                  data={timeSeriesData.filter(d => d.year >= yearRange[0] && d.year <= (isAnimating ? animationYear : yearRange[1]))}
                   onClick={(e) => e?.activePayload && setSelectedYear(e.activePayload[0]?.payload?.year)}
                 >
                   <defs>
-                    <linearGradient id="colorAgencies" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0c80f0" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#0c80f0" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorDissolved" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                    <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="year" tick={{ fontSize: 12 }} />
-                  <YAxis
-                    yAxisId="left"
-                    domain={normalizeData ? ['auto', 'auto'] : (chartMetric === 'emp' ? ['auto', 'auto'] : chartFilter === 'dissolved' ? [0, 'auto'] : [150, 300])}
-                    tickFormatter={normalizeData ? (v => `${v.toFixed(0)}`) : (chartMetric === 'emp' ? (v => `${(v/1000).toFixed(0)}k`) : undefined)}
+                  <YAxis 
+                    domain={chartMetric === 'emp' ? ['auto', 'auto'] : [150, 300]}
+                    tickFormatter={chartMetric === 'emp' ? (v => `${(v/1000).toFixed(0)}k`) : undefined}
                     tick={{ fontSize: 12 }}
-                    label={normalizeData ? { value: 'Index', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#78716c' } } : undefined}
                   />
-                  {!normalizeData && (showPopulation || showGDP) && (
-                    <YAxis
-                      yAxisId="right"
-                      orientation="right"
-                      tickFormatter={v => showPopulation ? `${(v/1000000).toFixed(1)}M` : `${(v/1000000).toFixed(1)}Mkr`}
-                      tick={{ fontSize: 11 }}
-                      stroke={showPopulation ? '#0d9488' : '#d97706'}
-                    />
-                  )}
-                  <Tooltip
+                  <Tooltip 
                     contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                    formatter={(v, name) => {
-                      if (normalizeData) return [v?.toFixed(1), name];
-                      if (name === 'Befolkning') return [v?.toLocaleString('sv-SE'), name];
-                      if (name === 'BNP') return [`${(v/1000).toFixed(0)} mdr kr`, name];
-                      if (name === 'Nedlagda') return [v, name];
-                      if (name === 'Kvinnor') return [v?.toLocaleString('sv-SE'), name];
-                      if (name === 'Män') return [v?.toLocaleString('sv-SE'), name];
-                      if (name === 'Anställda') return [v?.toLocaleString('sv-SE'), name];
-                      return [v?.toLocaleString('sv-SE') || v, name];
-                    }}
+                    formatter={(v, name) => [
+                      chartMetric === 'emp' ? v?.toLocaleString('sv-SE') : v,
+                      name === 'dissolved' ? 'Nedlagda' : (chartMetric === 'emp' ? 'Anställda' : 'Myndigheter')
+                    ]}
                   />
-                  {Object.values(activeSeries).filter(Boolean).length > 1 && <Legend />}
                   {showGovernments && governmentPeriods
                     .filter(p => p.end > yearRange[0] && p.start < yearRange[1])
                     .map((p, i) => (
@@ -1695,66 +1247,27 @@ export default function MyndigheterV6() {
                         x2={Math.min(p.end, isAnimating ? animationYear : yearRange[1])}
                         fill={p.party === 'S' ? '#ef4444' : '#3b82f6'}
                         fillOpacity={0.08}
-                        yAxisId="left"
                       />
                     ))
                   }
-                  {/* Agencies */}
-                  {activeSeries.agencies && chartFilter !== 'dissolved' && (
-                    chartType === 'bar' ? (
-                      <Bar yAxisId="left" dataKey="count" fill="#0c80f0" radius={[2,2,0,0]} cursor="pointer" name="Myndigheter" />
-                    ) : chartType === 'line' ? (
-                      <Line yAxisId="left" type="monotone" dataKey="count" stroke="#0c80f0" strokeWidth={2} dot={{ r: 3 }} cursor="pointer" name="Myndigheter" />
-                    ) : (
-                      <Area yAxisId="left" type="monotone" dataKey="count" stroke="#0c80f0" strokeWidth={2} fill="url(#colorAgencies)" cursor="pointer" name="Myndigheter" />
-                    )
+                  {chartType === 'bar' ? (
+                    <Bar dataKey={chartMetric === 'emp' ? 'emp' : 'count'} fill="#3b82f6" radius={[2,2,0,0]} cursor="pointer" />
+                  ) : chartType === 'line' ? (
+                    <Line type="monotone" dataKey={chartMetric === 'emp' ? 'emp' : 'count'} stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} cursor="pointer" />
+                  ) : (
+                    <Area type="monotone" dataKey={chartMetric === 'emp' ? 'emp' : 'count'} stroke="#3b82f6" strokeWidth={2} fill="url(#colorMain)" cursor="pointer" />
                   )}
-                  {/* Employees */}
-                  {activeSeries.employees && (
-                    <Line yAxisId="left" type="monotone" dataKey="emp" stroke="#059669" strokeWidth={2} dot={{ r: 2 }} name="Anställda" />
-                  )}
-                  {/* Nedlagda myndigheter */}
-                  {(chartFilter === 'all' || chartFilter === 'dissolved') && chartMetric !== 'emp' && !normalizeData && (
-                    chartFilter === 'dissolved' ? (
-                      chartType === 'bar' ? (
-                        <Bar yAxisId="left" dataKey="dissolved" fill="#ef4444" radius={[2,2,0,0]} cursor="pointer" name="Nedlagda" />
-                      ) : chartType === 'line' ? (
-                        <Line yAxisId="left" type="monotone" dataKey="dissolved" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} cursor="pointer" name="Nedlagda" />
-                      ) : (
-                        <Area yAxisId="left" type="monotone" dataKey="dissolved" stroke="#ef4444" strokeWidth={2} fill="url(#colorDissolved)" cursor="pointer" name="Nedlagda" />
-                      )
-                    ) : (
-                      <Line yAxisId="left" type="monotone" dataKey="dissolved" stroke="#ef4444" strokeWidth={2} dot={{ r: 2 }} name="Nedlagda" />
-                    )
-                  )}
-                  {/* Population */}
-                  {activeSeries.population && (
-                    <Line yAxisId={normalizeData ? "left" : "right"} type="monotone" dataKey="population" stroke="#0d9488" strokeWidth={2} strokeDasharray={normalizeData ? "0" : "5 5"} dot={false} name="Befolkning" />
-                  )}
-                  {/* GDP */}
-                  {activeSeries.gdp && (
-                    <Line yAxisId={normalizeData ? "left" : "right"} type="monotone" dataKey="gdp" stroke="#d97706" strokeWidth={2} strokeDasharray={normalizeData ? "0" : "5 5"} dot={false} name="BNP" />
-                  )}
-                  {/* Women */}
-                  {activeSeries.women && (
-                    <Line yAxisId="left" type="monotone" dataKey="w" stroke="#be185d" strokeWidth={2} dot={{ r: 2 }} name="Kvinnor" />
-                  )}
-                  {/* Men */}
-                  {activeSeries.men && (
-                    <Line yAxisId="left" type="monotone" dataKey="m" stroke="#4f46e5" strokeWidth={2} dot={{ r: 2 }} name="Män" />
+                  {showDissolved && (
+                    <Line type="monotone" dataKey="dissolved" stroke="#ef4444" strokeWidth={2} dot={{ r: 2 }} />
                   )}
                 </ComposedChart>
               </ResponsiveContainer>
-              <p className="text-sm text-neutral-500 text-center mt-2">
-                {normalizeData
-                  ? `Alla serier normaliserade till ${yearRange[0]}=100 för jämförbarhet`
-                  : 'Klicka på ett år för att se bildade/nedlagda myndigheter'}
-              </p>
+              <p className="text-sm text-gray-500 text-center mt-2">Klicka på ett år för att se bildade/nedlagda myndigheter</p>
             </div>
 
             {/* År-detaljer */}
             {selectedYear && (
-              <div className={`${cardStyle} rounded-xl p-4`}>
+              <div className={`${cardStyle} rounded-xl p-6`}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className={headingStyle}>{selectedYear}</h3>
                   <button 
@@ -1765,7 +1278,7 @@ export default function MyndigheterV6() {
                     <X className="w-5 h-5 text-gray-400" />
                   </button>
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <h4 className="text-sm font-medium text-emerald-600 mb-2 flex items-center gap-2">
                       <Check className="w-4 h-4" />
@@ -1799,70 +1312,6 @@ export default function MyndigheterV6() {
                 </div>
               </div>
             )}
-
-            {/* Könsfördelning - stapeldiagram */}
-            <div className={`${cardStyle} rounded-xl p-4`}>
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                <h3 className={`${headingStyle} text-lg flex items-center gap-2`}>
-                  <Users className="w-5 h-5" />
-                  Könsfördelning i staten
-                </h3>
-                <div className="text-sm text-gray-500">
-                  {yearRange[0]}–{yearRange[1]}
-                </div>
-              </div>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart
-                  data={genderHistoryData.filter(d => d.year >= yearRange[0] && d.year <= yearRange[1])}
-                  barCategoryGap="15%"
-                >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis
-                    dataKey="year"
-                    tick={{ fontSize: 11 }}
-                    interval={Math.ceil(genderHistoryData.filter(d => d.year >= yearRange[0] && d.year <= yearRange[1]).length / 10)}
-                  />
-                  <YAxis tickFormatter={v => `${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-                  <Tooltip
-                    formatter={(v, n) => [v.toLocaleString('sv-SE'), n === 'w' ? 'Kvinnor' : 'Män']}
-                    contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                    labelFormatter={(year) => `År ${year}`}
-                  />
-                  <Legend />
-                  <Bar dataKey="w" name="Kvinnor" fill="#ec4899" radius={[2,2,0,0]} />
-                  <Bar dataKey="m" name="Män" fill="#3b82f6" radius={[2,2,0,0]} />
-                </BarChart>
-              </ResponsiveContainer>
-              {/* Nyckeltal för senaste året */}
-              {(() => {
-                const latestData = genderHistoryData.find(d => d.year === Math.min(yearRange[1], 2024));
-                if (!latestData) return null;
-                const total = latestData.w + latestData.m;
-                const wPct = Math.round((latestData.w / total) * 100);
-                return (
-                  <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-                    <div className="p-3 rounded-lg bg-pink-50">
-                      <div className="text-2xl font-bold text-pink-600">{wPct}%</div>
-                      <div className="text-xs text-pink-700">Kvinnor {latestData.year}</div>
-                    </div>
-                    <div className="p-3 rounded-lg bg-blue-50">
-                      <div className="text-2xl font-bold text-blue-600">{100 - wPct}%</div>
-                      <div className="text-xs text-blue-700">Män {latestData.year}</div>
-                    </div>
-                    <div className="p-3 rounded-lg bg-gray-50">
-                      <div className="text-2xl font-bold text-gray-700">{total.toLocaleString('sv-SE')}</div>
-                      <div className="text-xs text-gray-600">Totalt {latestData.year}</div>
-                    </div>
-                  </div>
-                );
-              })()}
-              <div className="mt-3 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-                <p className="text-xs text-emerald-800">
-                  <strong>2008:</strong> Jämställdhet uppnåddes – för första gången 50/50 i staten.
-                  <strong className="ml-2">2024:</strong> 53% kvinnor.
-                </p>
-              </div>
-            </div>
 
             {/* Statistikkort */}
             <div className="grid grid-cols-2 gap-4">
@@ -1922,7 +1371,7 @@ export default function MyndigheterV6() {
           {showRegistry && (
             <div className="border-t border-gray-200">
               {/* Filter */}
-              <div className="p-4 space-y-3 sticky-filter">
+              <div className="p-4 space-y-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
@@ -1968,7 +1417,7 @@ export default function MyndigheterV6() {
                   >
                     <option value="all">Alla departement</option>
                     {departments.map(d => (
-                      <option key={d} value={d}>{getShortDeptName(d)}</option>
+                      <option key={d} value={d}>{d.replace('departementet', '').trim()}</option>
                     ))}
                   </select>
                   
@@ -2004,34 +1453,6 @@ export default function MyndigheterV6() {
                     </button>
                   )}
                   
-                  {/* Undo/Redo knappar */}
-                  <div className="flex gap-1">
-                    <button
-                      onClick={handleUndo}
-                      disabled={!filterHistory.canUndo}
-                      className={`p-2 rounded-lg min-w-[40px] min-h-[40px] flex items-center justify-center transition-opacity ${
-                        filterHistory.canUndo
-                          ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                          : 'bg-gray-50 text-gray-300 cursor-not-allowed'
-                      }`}
-                      title="Ångra filter (Ctrl+Z)"
-                    >
-                      <Undo2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={handleRedo}
-                      disabled={!filterHistory.canRedo}
-                      className={`p-2 rounded-lg min-w-[40px] min-h-[40px] flex items-center justify-center transition-opacity ${
-                        filterHistory.canRedo
-                          ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                          : 'bg-gray-50 text-gray-300 cursor-not-allowed'
-                      }`}
-                      title="Gör om filter (Ctrl+Y)"
-                    >
-                      <Redo2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
                   <span className="px-3 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg flex items-center min-h-[44px]">
                     {filteredAgencies.length} st
                   </span>
@@ -2114,25 +1535,25 @@ export default function MyndigheterV6() {
                 </div>
               )}
 
-              {/* Pagination - compact */}
+              {/* Pagination */}
               {groupBy === 'none' && totalPages > 1 && (
-                <div className="p-2 border-t border-gray-200 flex items-center justify-center gap-2">
+                <div className="p-4 border-t border-gray-200 flex items-center justify-center gap-3">
                   <button
                     onClick={() => setRegistryPage(p => Math.max(1, p - 1))}
                     disabled={registryPage === 1}
-                    className="px-2 py-1 rounded text-xs disabled:opacity-40 bg-gray-100 hover:bg-gray-200"
+                    className="px-4 py-2 rounded-lg text-sm disabled:opacity-40 bg-gray-100 hover:bg-gray-200 min-h-[44px]"
                   >
-                    ←
+                    ← Föregående
                   </button>
-                  <span className="text-xs text-gray-500">
-                    {registryPage}/{totalPages}
+                  <span className="text-sm text-gray-600">
+                    Sida {registryPage} av {totalPages}
                   </span>
                   <button
                     onClick={() => setRegistryPage(p => Math.min(totalPages, p + 1))}
                     disabled={registryPage === totalPages}
-                    className="px-2 py-1 rounded text-xs disabled:opacity-40 bg-gray-100 hover:bg-gray-200"
+                    className="px-4 py-2 rounded-lg text-sm disabled:opacity-40 bg-gray-100 hover:bg-gray-200 min-h-[44px]"
                   >
-                    →
+                    Nästa →
                   </button>
                 </div>
               )}
@@ -2143,7 +1564,7 @@ export default function MyndigheterV6() {
         {/* FIX #14: FTE Info modal */}
         {showFteInfo && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowFteInfo(false)}>
-            <div className="bg-white rounded-xl p-4 max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-xl p-6 max-w-md" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className={headingStyle}>Vad är FTE?</h3>
                 <button onClick={() => setShowFteInfo(false)} className="p-2 rounded-lg hover:bg-gray-100">
