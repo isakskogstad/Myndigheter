@@ -46,7 +46,9 @@ const Sidebar = ({
   ];
   return (
     <aside 
-      className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-64 bg-slate-50/95 backdrop-blur-xl border-r border-slate-200 flex-col justify-between transition-transform duration-300 ease-in-out static inset-auto"
+      className={`
+        hidden lg:flex w-64 bg-slate-50/95 backdrop-blur-xl border-r border-slate-200 flex-col justify-between flex-shrink-0 h-screen sticky top-0 z-40
+      `}
     >
       <div>
         {/* Brand */}

@@ -49,21 +49,16 @@ const DashboardView = ({
   isAnimating,
   setIsAnimating,
   animationYear,
-  // Receive setters from parent if controlled, else local state logic could apply but here we assume controlled props except for chartType which is view-specific
+  chartType, // Now controlled by parent
+  setChartType, // Now controlled by parent
+  genderMode,
+  setGenderMode,
+  perCapita,
+  setPerCapita,
+  onReset
 }) => {
-  // Default to 'bar' per request
-  const [chartType, setChartType] = useState('bar');
-  const [genderMode, setGenderMode] = useState('count');
-  const [perCapita, setPerCapita] = useState(false);
-
-  const handleReset = () => {
-    setActiveSeries({ agencies: true, employees: false });
-    setNormalizeData(false);
-    setPerCapita(false);
-    setGenderMode('count');
-    setYearRange([1978, 2025]);
-    setChartType('bar');
-  };
+  // Note: chartType is passed from parent now to ensure persistence, but we default to 'bar' if undefined
+  const currentChartType = chartType || 'bar';
 
   // Derived stats
   const currentYearData = timeSeriesData.find(d => d.year === (isAnimating ? animationYear : yearRange[1]));
@@ -140,6 +135,40 @@ const DashboardView = ({
     return value;
   };
 
+  // Dynamic Chart Component Generator
+  const renderSeries = (key, name, color, axis = 'left', strokeDash = '') => {
+    const commonProps = {
+      yAxisId: normalizeData ? 'left' : axis,
+      dataKey: key,
+      name: name,
+      fill: color,
+      stroke: color,
+      strokeWidth: 2,
+      animationDuration: 500,
+    };
+
+    if (currentChartType === 'bar') {
+      return (
+        <Bar {...commonProps} radius={[4, 4, 0, 0]}>
+          {chartData.length < 30 && activeSeries[Object.keys(activeSeries).filter(k => activeSeries[k]).length === 1 ? Object.keys(activeSeries).find(k => activeSeries[k]) : ''] && (
+             <LabelList dataKey={key} position="top" style={{ fontSize: 10, fill: '#64748b' }} formatter={(v) => normalizeData ? v.toFixed(0) : v >= 1000 ? (v/1000).toFixed(1)+'k' : v} />
+          )}
+        </Bar>
+      );
+    }
+    
+    if (currentChartType === 'line') {
+      return (
+        <Line {...commonProps} type="monotone" dot={false} activeDot={{ r: 6 }} strokeDasharray={strokeDash} strokeWidth={3} />
+      );
+    }
+
+    // Area (default)
+    return (
+      <Area {...commonProps} type="monotone" fillOpacity={0.3} activeDot={{ r: 6 }} />
+    );
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       
@@ -162,7 +191,7 @@ const DashboardView = ({
             perCapita={perCapita}
             setPerCapita={setPerCapita}
             baseYear={yearRange[0]}
-            onReset={handleReset}
+            onReset={onReset}
             genderMode={genderMode}
             setGenderMode={setGenderMode}
           />
@@ -180,7 +209,7 @@ const DashboardView = ({
       </div>
 
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-card relative overflow-hidden">
-        <div className="flex justify-between items-start mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h3 className="font-serif text-2xl text-slate-900 font-semibold">Utveckling över tid</h3>
             <p className="text-sm text-slate-500 mt-1 font-medium">
@@ -191,22 +220,22 @@ const DashboardView = ({
           <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-200">
             <button 
               onClick={() => setChartType('area')}
-              className={`p-2 rounded-lg transition-all ${chartType === 'area' ? 'bg-white shadow text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
-              title="Ytdiagram"
+              className={`p-2 rounded-lg transition-all ${currentChartType === 'area' ? 'bg-white shadow text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+              title="Ytdiagram (Area)"
             >
               <Activity className="w-4 h-4" />
             </button>
             <button 
               onClick={() => setChartType('bar')}
-              className={`p-2 rounded-lg transition-all ${chartType === 'bar' ? 'bg-white shadow text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
-              title="Stapeldiagram"
+              className={`p-2 rounded-lg transition-all ${currentChartType === 'bar' ? 'bg-white shadow text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+              title="Stapeldiagram (Bar)"
             >
               <BarChart3 className="w-4 h-4" />
             </button>
             <button 
               onClick={() => setChartType('line')}
-              className={`p-2 rounded-lg transition-all ${chartType === 'line' ? 'bg-white shadow text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
-              title="Linjediagram"
+              className={`p-2 rounded-lg transition-all ${currentChartType === 'line' ? 'bg-white shadow text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+              title="Linjediagram (Line)"
             >
               <LineChart className="w-4 h-4" />
             </button>
@@ -248,7 +277,7 @@ const DashboardView = ({
                 tickLine={false}
                 width={60}
               >
-                <Label value={normalizeData ? "Index" : "Antal"} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: '#94a3b8', fontSize: 11 }} />
+                <Label value={normalizeData ? "Index" : "Vänster axel"} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: '#94a3b8', fontSize: 11 }} />
               </YAxis>
               <YAxis 
                 yAxisId="right" 
@@ -260,10 +289,10 @@ const DashboardView = ({
                 tickLine={false}
                 width={60}
               >
-                 <Label value={normalizeData ? "" : "Värde (MSEK/Pers)"} angle={90} position="insideRight" style={{ textAnchor: 'middle', fill: '#94a3b8', fontSize: 11 }} />
+                 <Label value={normalizeData ? "" : "Höger axel"} angle={90} position="insideRight" style={{ textAnchor: 'middle', fill: '#94a3b8', fontSize: 11 }} />
               </YAxis>
               <Tooltip
-                contentStyle={{
+                contentStyle={{ 
                   backgroundColor: '#ffffff', 
                   borderColor: '#e2e8f0', 
                   borderRadius: '16px',
@@ -282,29 +311,28 @@ const DashboardView = ({
               />
               <Legend wrapperStyle={{paddingTop: '20px', fontSize: '13px', fontWeight: 500}} iconType="circle" />
               
-              {/* Render Labels only if not too dense (>30 items -> skip labels) */}
-              {chartData.length < 30 && chartType === 'bar' && (
-                 <text x="50%" y="50%" /> // Dummy render to allow LabelList logic if needed
-              )}
+              {governmentPeriods
+                .filter(p => p.end > yearRange[0] && p.start < yearRange[1])
+                .map((p, i) => (
+                  <ReferenceArea
+                    key={i}
+                    x1={Math.max(p.start, yearRange[0])}
+                    x2={Math.min(p.end, isAnimating ? animationYear : yearRange[1])}
+                    fill={p.party === 'S' ? '#fee2e2' : '#e0f2fe'}
+                    fillOpacity={0.4}
+                    yAxisId="left"
+                  />
+                ))
+              }
 
-              {activeSeries.agencies && (
-                chartType === 'bar' ? (
-                  <Bar yAxisId="left" dataKey="count" name="Antal Myndigheter" fill="#475569" radius={[4, 4, 0, 0]}>
-                    {/* Show labels on bars if < 40 items to avoid clutter */}
-                    {chartData.length < 40 && <LabelList dataKey="count" position="top" style={{ fontSize: 10, fill: '#64748b' }} />}
-                  </Bar>
-                ) : chartType === 'line' ? (
-                  <Line yAxisId="left" type="monotone" dataKey="count" name="Antal Myndigheter" stroke="#475569" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
-                ) : (
-                  <Area yAxisId="left" type="monotone" dataKey="count" name="Antal Myndigheter" stroke="#475569" strokeWidth={2} fill="url(#colorAgencies)" activeDot={{ r: 6 }} />
-                )
-              )}
+              {/* Dynamic Series Rendering */} 
+              {activeSeries.agencies && renderSeries('count', 'Antal Myndigheter', '#475569')}
+              {activeSeries.employees && renderSeries('emp', 'Antal Anställda', '#84a59d', 'left', '5 5')}
+              {activeSeries.population && renderSeries('population', 'Befolkning', '#94a3b8', 'right', '3 3')}
+              {activeSeries.gdp && renderSeries('gdp', 'BNP', '#d97706', 'right')}
+              {activeSeries.women && renderSeries('w', 'Kvinnor', '#be185d')}
+              {activeSeries.men && renderSeries('m', 'Män', '#4f46e5')}
 
-              {activeSeries.employees && <Line yAxisId="left" type="monotone" dataKey="emp" name="Anställda" stroke="#84a59d" strokeWidth={3} dot={false} strokeDasharray={normalizeData ? "" : "5 5"} />}
-              {activeSeries.population && <Line yAxisId={normalizeData ? "left" : "right"} type="monotone" dataKey="population" name="Befolkning" stroke="#94a3b8" strokeWidth={2} dot={false} strokeDasharray="3 3" />}
-              {activeSeries.gdp && <Line yAxisId={normalizeData ? "left" : "right"} type="monotone" dataKey="gdp" name="BNP" stroke="#d97706" strokeWidth={2} dot={false} />}
-              {activeSeries.women && <Line yAxisId="left" type="monotone" dataKey="w" name="Kvinnor" stroke="#be185d" strokeWidth={2} dot={false} />}
-              {activeSeries.men && <Line yAxisId="left" type="monotone" dataKey="m" name="Män" stroke="#4f46e5" strokeWidth={2} dot={false} />}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
