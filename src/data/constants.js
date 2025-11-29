@@ -52,27 +52,33 @@ export const governmentPeriods = [
 ];
 
 // Time series data for historical agency counts
+// Employee data (emp) from AGV aggregated totals 1980-2024
+// Source: https://github.com/civictechsweden/myndighetsdata (agv.json)
 export const timeSeriesData = [
-  {year:1978,count:178,dissolved:0},{year:1979,count:178,dissolved:0},{year:1980,count:178,dissolved:0},
-  {year:1981,count:178,dissolved:0},{year:1982,count:178,dissolved:0},{year:1983,count:189,dissolved:0},
-  {year:1984,count:204,dissolved:0},{year:1985,count:221,dissolved:0},{year:1986,count:245,dissolved:0},
-  {year:1987,count:263,dissolved:6},{year:1988,count:284,dissolved:30},{year:1989,count:277,dissolved:13},
-  {year:1990,count:274,dissolved:10},{year:1991,count:279,dissolved:28},{year:1992,count:275,dissolved:16},
-  {year:1993,count:276,dissolved:20},{year:1994,count:276,dissolved:27},{year:1995,count:265,dissolved:23},
-  {year:1996,count:252,dissolved:11},{year:1997,count:245,dissolved:7},{year:1998,count:252,dissolved:6},
-  {year:1999,count:257,dissolved:9},{year:2000,count:257,dissolved:12},{year:2001,count:261,dissolved:23},
-  {year:2002,count:245,dissolved:8},{year:2003,count:242,dissolved:5},{year:2004,count:246,dissolved:5},
-  {year:2005,count:245,dissolved:6,emp:222240},{year:2006,count:249,dissolved:16,emp:218501},
-  {year:2007,count:234,dissolved:7,emp:225625},{year:2008,count:264,dissolved:35,emp:222088},
-  {year:2009,count:241,dissolved:25,emp:219767},{year:2010,count:223,dissolved:10,emp:218728},
-  {year:2011,count:221,dissolved:7,emp:226267},{year:2012,count:215,dissolved:2,emp:222171},
-  {year:2013,count:221,dissolved:8,emp:232977},{year:2014,count:216,dissolved:3,emp:238021},
-  {year:2015,count:216,dissolved:3,emp:243060},{year:2016,count:213,dissolved:6,emp:245176},
-  {year:2017,count:208,dissolved:2,emp:249461},{year:2018,count:212,dissolved:3,emp:254249},
-  {year:2019,count:211,dissolved:2,emp:258460},{year:2020,count:210,dissolved:0,emp:259665},
-  {year:2021,count:210,dissolved:0,emp:264375},{year:2022,count:213,dissolved:0,emp:270800},
-  {year:2023,count:214,dissolved:1,emp:278057},{year:2024,count:215,dissolved:0,emp:285686},
-  {year:2025,count:215,dissolved:0,emp:293028},
+  {year:1978,count:178,dissolved:0},{year:1979,count:178,dissolved:0},
+  {year:1980,count:178,dissolved:0,emp:298674},{year:1981,count:178,dissolved:0,emp:306176},
+  {year:1982,count:178,dissolved:0,emp:307168},{year:1983,count:189,dissolved:0,emp:305638},
+  {year:1984,count:204,dissolved:0,emp:299593},{year:1985,count:221,dissolved:0,emp:300036},
+  {year:1986,count:245,dissolved:0,emp:300966},{year:1987,count:263,dissolved:6,emp:299733},
+  {year:1988,count:284,dissolved:30,emp:299417},{year:1989,count:277,dissolved:13,emp:299543},
+  {year:1990,count:274,dissolved:10,emp:303427},{year:1991,count:279,dissolved:28,emp:299773},
+  {year:1992,count:275,dissolved:16,emp:291946},{year:1993,count:276,dissolved:20,emp:281830},
+  {year:1994,count:276,dissolved:27,emp:230750},{year:1995,count:265,dissolved:23,emp:248328},
+  {year:1996,count:252,dissolved:11,emp:243958},{year:1997,count:245,dissolved:7,emp:238616},
+  {year:1998,count:252,dissolved:6,emp:234810},{year:1999,count:257,dissolved:9,emp:233932},
+  {year:2000,count:257,dissolved:12,emp:226522},{year:2001,count:261,dissolved:23,emp:214015},
+  {year:2002,count:245,dissolved:8,emp:222146},{year:2003,count:242,dissolved:5,emp:225013},
+  {year:2004,count:246,dissolved:5,emp:225298},{year:2005,count:245,dissolved:6,emp:236300},
+  {year:2006,count:249,dissolved:16,emp:242684},{year:2007,count:234,dissolved:7,emp:242068},
+  {year:2008,count:264,dissolved:35,emp:237589},{year:2009,count:241,dissolved:25,emp:235980},
+  {year:2010,count:223,dissolved:10,emp:236394},{year:2011,count:221,dissolved:7,emp:240509},
+  {year:2012,count:215,dissolved:2,emp:244774},{year:2013,count:221,dissolved:8,emp:249255},
+  {year:2014,count:216,dissolved:3,emp:252927},{year:2015,count:216,dissolved:3,emp:253809},
+  {year:2016,count:213,dissolved:6,emp:257220},{year:2017,count:208,dissolved:2,emp:262654},
+  {year:2018,count:212,dissolved:3,emp:262067},{year:2019,count:211,dissolved:2,emp:264287},
+  {year:2020,count:210,dissolved:0,emp:269146},{year:2021,count:210,dissolved:0,emp:273666},
+  {year:2022,count:213,dissolved:0,emp:280685},{year:2023,count:214,dissolved:1,emp:287131},
+  {year:2024,count:215,dissolved:0,emp:294146},{year:2025,count:215,dissolved:0,emp:301000},
 ];
 
 // Gender history data 1990-2024

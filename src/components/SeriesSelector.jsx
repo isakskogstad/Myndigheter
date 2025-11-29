@@ -9,7 +9,7 @@ const SeriesSelector = ({
 }) => {
   const seriesOptions = [
     { id: 'agencies', label: 'Myndigheter', color: '#0c80f0', dataKey: 'count' },
-    { id: 'employees', label: 'Anställda', color: '#059669', dataKey: 'emp', fromYear: 2005 },
+    { id: 'employees', label: 'Anställda', color: '#059669', dataKey: 'emp', fromYear: 1980 },
     { id: 'population', label: 'Befolkning', color: '#0d9488', dataKey: 'population' },
     { id: 'gdp', label: 'BNP', color: '#d97706', dataKey: 'gdp' },
     { id: 'women', label: 'Kvinnor', color: '#be185d', dataKey: 'w', fromYear: 1990 },
