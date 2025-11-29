@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
+import { ToastProvider } from './components/ui/Toast';
 
 // Lazy load the main application
 const MyndigheterV6 = React.lazy(() => import('./MyndigheterApp'));
@@ -52,9 +53,11 @@ class ErrorBoundary extends React.Component {
 function App() {
   return (
     <ErrorBoundary>
-      <Suspense fallback={<FullScreenLoader />}>
-        <MyndigheterV6 />
-      </Suspense>
+      <ToastProvider>
+        <Suspense fallback={<FullScreenLoader />}>
+          <MyndigheterV6 />
+        </Suspense>
+      </ToastProvider>
     </ErrorBoundary>
   );
 }

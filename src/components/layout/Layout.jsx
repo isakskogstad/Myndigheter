@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import BottomNav from './BottomNav';
 
 const Layout = ({ 
   children, 
@@ -11,13 +12,15 @@ const Layout = ({
   isDark,
   onToggleDark,
   searchQuery,
-  onSearchChange
+  onSearchChange,
+  agencies,
+  onSelectAgency
 }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  
   // Map ID to label
   const tabs = {
     overview: 'Översikt',
+    analysis: 'Analys',
     departments: 'Departement',
     regions: 'Regioner',
     list: 'Register',
@@ -27,37 +30,25 @@ const Layout = ({
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-800 font-sans selection:bg-primary-100 selection:text-primary-900">
       
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 lg:hidden transition-opacity"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
+      {/* Desktop Sidebar */}
       <Sidebar 
         activeTab={activeTab} 
-        onTabChange={(id) => {
-          onTabChange(id);
-          setIsMobileMenuOpen(false);
-        }}
+        onTabChange={onTabChange}
         showIntro={showIntro}
         onToggleIntro={onToggleIntro}
         isDark={isDark}
         onToggleDark={onToggleDark}
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
       />
       
-      <div className="flex-1 flex flex-col min-w-0 bg-white/50">
+      <div className="flex-1 flex flex-col min-w-0 bg-white/50 pb-16 lg:pb-0">
         <Header 
           activeTabLabel={tabs[activeTab]} 
           searchQuery={searchQuery} 
           onSearchChange={onSearchChange}
-          onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          agencies={agencies}
+          onSelectAgency={onSelectAgency}
           onShare={() => {
             navigator.clipboard.writeText(window.location.href);
-            // Toast notification could go here
             alert('Länk kopierad till urklipp!');
           }}
         />
@@ -77,6 +68,9 @@ const Layout = ({
             </div>
           </footer>
         </main>
+
+        {/* Mobile Bottom Nav */}
+        <BottomNav activeTab={activeTab} onTabChange={onTabChange} />
       </div>
     </div>
   );

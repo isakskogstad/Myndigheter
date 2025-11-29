@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Share, ChevronRight, Menu, X, Command } from 'lucide-react';
+import { Search, Share, ChevronRight, Command, X } from 'lucide-react';
 
 const Header = ({ 
   activeTabLabel, 
@@ -28,13 +28,6 @@ const Header = ({
       
       {/* Left Side */}
       <div className="flex items-center gap-4">
-        <button 
-          onClick={onToggleMobileMenu}
-          className="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-
         <div className="flex items-center text-sm text-slate-500">
           <span className="hover:text-slate-800 cursor-pointer hidden sm:inline font-medium transition-colors">Start</span>
           <ChevronRight className="w-4 h-4 mx-2 text-slate-300 hidden sm:block" />

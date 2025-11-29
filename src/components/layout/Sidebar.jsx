@@ -46,10 +46,7 @@ const Sidebar = ({
   ];
   return (
     <aside 
-      className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-slate-50/95 backdrop-blur-xl border-r border-slate-200 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto
-        ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
-      `}
+      className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-64 bg-slate-50/95 backdrop-blur-xl border-r border-slate-200 flex-col justify-between transition-transform duration-300 ease-in-out static inset-auto"
     >
       <div>
         {/* Brand */}

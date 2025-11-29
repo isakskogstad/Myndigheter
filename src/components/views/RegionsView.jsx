@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Info } from 'lucide-react';
 import RegionHistoryChart from '../charts/RegionHistoryChart';
 import SwedenMap from '../charts/SwedenMap';
 
 const RegionsView = ({ regionStats, agencies }) => {
+  const [hoveredRegion, setHoveredRegion] = useState(null);
+
   return (
     <div className="space-y-8 animate-fade-in">
       
@@ -18,7 +20,12 @@ const RegionsView = ({ regionStats, agencies }) => {
             
             <div className="space-y-3">
               {regionStats.map(r => (
-                <div key={r.name} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors group">
+                <div 
+                  key={r.name} 
+                  onMouseEnter={() => setHoveredRegion(r.name)}
+                  onMouseLeave={() => setHoveredRegion(null)}
+                  className={`flex items-center justify-between p-3 rounded-xl transition-colors cursor-default group ${hoveredRegion === r.name ? 'bg-slate-100 scale-[1.02] shadow-sm' : 'bg-slate-50 hover:bg-slate-100'}`}
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: r.color }} />
                     <span className="font-medium text-slate-700 group-hover:text-slate-900">{r.name}</span>
@@ -40,7 +47,7 @@ const RegionsView = ({ regionStats, agencies }) => {
           </div>
 
           <div className="h-[500px] w-full bg-slate-50/50 rounded-3xl p-8 border border-slate-100 flex items-center justify-center">
-            <SwedenMap stats={regionStats} />
+            <SwedenMap stats={regionStats} hoveredRegion={hoveredRegion} />
           </div>
         </div>
       </div>
