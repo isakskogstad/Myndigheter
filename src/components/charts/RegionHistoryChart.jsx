@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Play, Square, ChevronLeft, ChevronRight } from 'lucide-react';
+import { regionColors } from '../../data/constants';
 
 // Region mapping helper
 const getRegionForCity = (city) => {
@@ -22,14 +23,6 @@ const getRegionForCity = (city) => {
     return 'Uppsala';
   }
   return 'Övrigt';
-};
-
-const regionColors = {
-  'Stockholm': '#0c80f0',
-  'Göteborg': '#059669',
-  'Malmö': '#d97706',
-  'Uppsala': '#7c3aed',
-  'Övrigt': '#78716c'
 };
 
 const RegionHistoryChart = ({ agencies, yearRange = [1978, 2025] }) => {

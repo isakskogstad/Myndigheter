@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Play, Square, ChevronLeft, ChevronRight } from 'lucide-react';
-import { deptColors } from '../data/constants';
+import { deptColors } from '../../data/constants';
 
 // Department name mapping for historical names
 const normalizeDeptName = (dept) => {
