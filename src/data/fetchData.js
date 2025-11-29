@@ -1,7 +1,7 @@
 // External data fetching from civictechsweden/myndighetsdata
 const BASE_URL = 'https://raw.githubusercontent.com/civictechsweden/myndighetsdata/master/data';
 
-const CACHE_KEY = 'myndigheter_data_cache_v2';  // v2: added AGV history
+const CACHE_KEY = 'myndigheter_data_cache_v3';  // v3: added wiki, email, address, full data
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
@@ -84,11 +84,34 @@ export async function fetchAllAgencyData() {
 
 /**
  * Merge and transform raw data into app-ready compact format
- * Uses short property names to match existing MyndigheterApp.jsx format:
- * n=name, s=start, e=end, d=department, en=english, sh=short, emp=employees,
- * fte=FTE, w=women, m=men, str=structure, cof=cofog, gd=hasGD, fteH=FTE history,
- * org=orgNr, tel=phone, web=website, grp=group, city=city, host=host, sfs=SFS ref,
- * empH=employee history (total), wH=women history, mH=men history (from AGV, 1980+)
+ * Uses short property names:
+ *
+ * BASIC INFO:
+ * n=name, en=english name, sh=short name, d=department, org=orgNr
+ *
+ * DATES:
+ * s=start date, e=end date (dissolved)
+ *
+ * EMPLOYEES (current):
+ * emp=total employees, fte=FTE, w=women, m=men
+ *
+ * EMPLOYEES (history - all years available):
+ * empH=employee history {year: count}, wH=women history, mH=men history
+ * fteH=FTE history (from ESV)
+ *
+ * ORGANIZATION:
+ * str=structure (Styrelse/Enrådighet), cof=COFOG code, gd=has GD (boolean)
+ * host=host authority, grp=group category
+ *
+ * CONTACT:
+ * web=website, wiki=Wikipedia URL, wdId=Wikidata ID
+ * email=email, tel=phone
+ *
+ * ADDRESS:
+ * city=city, addr=office address, post=postal address
+ *
+ * LEGAL:
+ * sfs=SFS reference (creating regulation), sfsAll=all SFS references
  */
 export function transformAgencyData(rawData) {
   // Defensive: ensure rawData has required properties
@@ -143,37 +166,69 @@ export function transformAgencyData(rawData) {
     const latestWomen = latestAgvYear ? agvWomen[latestAgvYear] : undefined;
     const latestMen = latestAgvYear ? agvMen[latestAgvYear] : undefined;
 
-    // Extract city from AGV office address
-    const officeAddr = agv.office_address || '';
-    const cityMatch = officeAddr.match(/\d{3}\s*\d{2}\s+([A-ZÅÄÖ]+)/);
-    const city = cityMatch ? cityMatch[1] : undefined;
+    // Extract city from SCB office_address or postal_address
+    const scbOffice = scb.office_address || {};
+    const scbPostal = scb.postal_address || {};
+    const city = scbOffice.city || scbPostal.city;
 
-    // Build compact agency object matching MyndigheterApp.jsx format
+    // Build office address string
+    const officeAddress = scbOffice.address
+      ? `${scbOffice.address}, ${scbOffice.postcode || ''} ${scbOffice.city || ''}`.trim()
+      : undefined;
+
+    // Build postal address string
+    const postalAddress = scbPostal.address
+      ? `${scbPostal.address}, ${scbPostal.postcode || ''} ${scbPostal.city || ''}`.trim()
+      : undefined;
+
+    // Build compact agency object with ALL available data
     const agency = {
-      n: name,  // name
-      d: esv.department || stkt.department,  // department
-      s: wdData.start || stkt.start || sfs.start,  // start date
-      e: wdData.end || stkt.end || sfs.end,  // end date (for dissolved agencies)
-      en: esv.name_en || wdData.name_en,  // english name
-      sh: esv.short_name || stkt.abbreviation,  // short name
-      emp: latestEmp,  // total employees (latest available)
-      fte: latestFte,  // FTE for latest year
-      w: latestWomen || scb.women,  // women count (prefer AGV, fallback SCB)
-      m: latestMen || scb.men,  // men count (prefer AGV, fallback SCB)
-      str: stkt.structure,  // structure type
-      cof: stkt.cofog10,  // COFOG code
-      gd: stkt.has_gd,  // has generaldirektör
-      fteH: esvFte,  // FTE history (from ESV)
-      empH: agvTotal,  // Employee history from AGV (1980+)
-      wH: agvWomen,  // Women history from AGV (1980+)
-      mH: agvMen,  // Men history from AGV (1980+)
-      org: esv.org_nr || stkt.org_nr,  // organization number
-      tel: agv.phone,  // telephone
-      web: agv.website,  // website
-      grp: agv.group,  // group
-      city: city,  // city
-      host: stkt.host_authority,  // host authority
-      sfs: sfs.created_by,  // SFS reference
+      // BASIC INFO
+      n: name,
+      en: esv.name_en || wdData.name_en,
+      sh: esv.short_name || stkt.abbreviation || scb.short_name,
+      d: esv.department || stkt.department,
+      org: esv.org_nr || stkt.org_nr || scb.org_nr || wdData.org_nr,
+
+      // DATES
+      s: wdData.start || stkt.start || sfs.start,
+      e: wdData.end || stkt.end || sfs.end,
+
+      // EMPLOYEES (current/latest)
+      emp: latestEmp,
+      fte: latestFte,
+      w: latestWomen || scb.women,
+      m: latestMen || scb.men,
+
+      // EMPLOYEES (history - all years)
+      empH: agvTotal,  // { "1980": 1234, "1981": 1250, ... }
+      wH: agvWomen,    // { "1980": 600, ... }
+      mH: agvMen,      // { "1980": 634, ... }
+      fteH: esvFte,    // FTE from ESV (2005+)
+
+      // ORGANIZATION
+      str: stkt.structure,  // "Styrelse", "Enrådighet", etc.
+      cof: stkt.cofog10,    // COFOG classification
+      gd: stkt.has_gd,      // has generaldirektör (boolean)
+      host: stkt.host_authority,
+      grp: scb.group,       // Agency category
+
+      // CONTACT
+      web: scb.website || agv.website,
+      wiki: wdData.wiki_url,
+      wdId: wdData.id,      // Wikidata Q-id
+      email: scb.email || esv.email,
+      tel: scb.phone || agv.phone,
+
+      // ADDRESS
+      city: city,
+      addr: officeAddress,
+      post: postalAddress,
+
+      // LEGAL
+      sfs: sfs.created_by || stkt.created_by,
+      sfsAll: sfs.sfs,      // Array of all SFS references
+      sfsLatest: stkt.latest_updated_by,
     };
 
     // Remove undefined/null/empty properties to keep objects clean
