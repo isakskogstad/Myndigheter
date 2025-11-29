@@ -329,7 +329,7 @@ export default function MyndigheterV6() {
   // FIX #14: Info modal för FTE
   const [showFteInfo, setShowFteInfo] = useState(false);
   
-  const activeAgencies = useMemo(() => currentAgenciesData.filter(a => !a.e), [currentAgenciesData]);
+  const activeAgencies = useMemo(() => currentAgenciesData.filter(a => a && a.n && !a.e), [currentAgenciesData]);
   const departments = useMemo(() => [...new Set(activeAgencies.map(a => a.d).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'sv')), [activeAgencies]);
 
   // FIX #9: Regionstatistik
@@ -369,7 +369,7 @@ export default function MyndigheterV6() {
     if (!searchInput || searchInput.length < 2) return [];
     const search = searchInput.toLowerCase();
     return currentAgenciesData.filter(a =>
-      a.n.toLowerCase().includes(search) ||
+      a.n?.toLowerCase().includes(search) ||
       a.sh?.toLowerCase().includes(search) ||
       a.en?.toLowerCase().includes(search)
     ).slice(0, 8);
@@ -377,14 +377,15 @@ export default function MyndigheterV6() {
 
   // FIX #6 & #7: Korrekt loading och filtrering
   const filteredAgencies = useMemo(() => {
-    let result = [...currentAgenciesData];
-    
+    // Filter out invalid entries first
+    let result = currentAgenciesData.filter(a => a && a.n);
+
     if (registrySearch) {
       const search = registrySearch.toLowerCase();
-      result = result.filter(a => 
-        a.n.toLowerCase().includes(search) || 
-        a.en?.toLowerCase().includes(search) || 
-        a.sh?.toLowerCase().includes(search) || 
+      result = result.filter(a =>
+        a.n?.toLowerCase().includes(search) ||
+        a.en?.toLowerCase().includes(search) ||
+        a.sh?.toLowerCase().includes(search) ||
         a.d?.toLowerCase().includes(search)
       );
     }
@@ -392,14 +393,14 @@ export default function MyndigheterV6() {
     else if (registryFilter === 'inactive') result = result.filter(a => a.e);
     if (departmentFilter !== 'all') result = result.filter(a => a.d === departmentFilter);
     if (selectedDept) result = result.filter(a => a.d === selectedDept);
-    
+
     result.sort((a, b) => {
-      if (registrySort === 'name') return a.n.localeCompare(b.n, 'sv');
+      if (registrySort === 'name') return (a.n || '').localeCompare(b.n || '', 'sv');
       if (registrySort === 'employees') return (b.emp || 0) - (a.emp || 0);
       if (registrySort === 'start') return (b.s || '1800') > (a.s || '1800') ? 1 : -1;
       return 0;
     });
-    
+
     return result;
   }, [registrySearch, registryFilter, departmentFilter, registrySort, selectedDept, currentAgenciesData]);
 
