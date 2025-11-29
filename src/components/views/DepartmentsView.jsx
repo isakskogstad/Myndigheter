@@ -2,18 +2,19 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { deptColors } from '../../data/constants';
 import DeptHistoryChart from '../charts/DeptHistoryChart';
+import ds from '../../styles/designSystem';
 
 const getShortDeptName = (dept) => dept.replace('departementet', '').trim();
 
 const DepartmentsView = ({ agencies, departments, departmentStats, onDepartmentClick }) => {
   return (
-    <div className="space-y-8 animate-fade-in">
-      
+    <div className={ds.cn('space-y-8 animate-fade-in')}>
+
       {/* Current Distribution */}
-      <div className="bg-white p-8 rounded-3xl shadow-card border border-slate-200 relative overflow-hidden">
+      <div className={ds.cn('bg-white', ds.cardPadding.lg, ds.radius.lg, ds.shadows.card, 'border relative overflow-hidden')} style={{ borderColor: ds.colors.slate[200] }}>
         <div className="mb-8">
-          <h3 className="font-serif text-2xl text-slate-900 font-semibold">Myndigheter per Departement</h3>
-          <p className="text-slate-500 mt-1">Klicka på en stapel för att se detaljerad lista</p>
+          <h3 className={ds.cn('font-serif', ds.typography.sizes['2xl'], 'text-slate-900', ds.typography.weights.semibold)}>Myndigheter per Departement</h3>
+          <p className={ds.cn('text-slate-500 mt-1')}>Klicka på en stapel för att se detaljerad lista</p>
         </div>
         <div className="h-[500px] w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -66,10 +67,10 @@ const DepartmentsView = ({ agencies, departments, departmentStats, onDepartmentC
       </div>
 
       {/* Historical Trend */}
-      <div className="bg-white p-8 rounded-3xl shadow-card border border-slate-200">
+      <div className={ds.cn('bg-white', ds.cardPadding.lg, ds.radius.lg, ds.shadows.card, 'border')} style={{ borderColor: ds.colors.slate[200] }}>
         <div className="mb-6">
-          <h3 className="font-serif text-xl text-slate-900 font-semibold">Historisk utveckling</h3>
-          <p className="text-sm text-slate-500">Förändring av departementsstruktur över tid</p>
+          <h3 className={ds.cn('font-serif', ds.typography.sizes.xl, 'text-slate-900', ds.typography.weights.semibold)}>Historisk utveckling</h3>
+          <p className={ds.cn(ds.typography.sizes.sm, 'text-slate-500')}>Förändring av departementsstruktur över tid</p>
         </div>
         <DeptHistoryChart agencies={agencies} yearRange={[1978, 2025]} />
       </div>

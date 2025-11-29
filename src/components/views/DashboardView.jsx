@@ -10,6 +10,7 @@ import RangeSlider from '../ui/RangeSlider';
 import AgencySelector from '../ui/AgencySelector';
 import { governmentPeriods, timeSeriesData, genderHistoryData } from '../../data/constants';
 import { getStatsByYear } from '../../data/swedenStats';
+import ds from '../../styles/designSystem';
 
 // Mobile detection hook
 const useIsMobile = () => {
@@ -33,27 +34,27 @@ const AnimatedNumber = ({ value, prefix = '', suffix = '', className = '' }) => 
 );
 
 const TrendArrow = ({ current, previous, className = '' }) => {
-  if (!previous || !current) return <Minus className={`w-4 h-4 text-slate-400 ${className}`} />; 
+  if (!previous || !current) return <Minus className={ds.cn(ds.iconSizes.sm, 'text-slate-400', className)} />;
   const diff = ((current - previous) / previous) * 100;
-  if (Math.abs(diff) < 0.5) return <Minus className={`w-4 h-4 text-slate-400 ${className}`} />; 
-  if (diff > 0) return <div className={`flex items-center text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-xs font-bold ${className}`}><ArrowUp className="w-3 h-3 mr-1" /> {diff.toFixed(1)}%</div>;
-  return <div className={`flex items-center text-red-700 bg-red-100 px-2 py-0.5 rounded-full text-xs font-bold ${className}`}><ArrowDown className="w-3 h-3 mr-1" /> {Math.abs(diff).toFixed(1)}%</div>;
+  if (Math.abs(diff) < 0.5) return <Minus className={ds.cn(ds.iconSizes.sm, 'text-slate-400', className)} />;
+  if (diff > 0) return <div className={ds.cn('flex items-center px-2 py-0.5', ds.radius.full, ds.typography.sizes.xs, ds.typography.weights.bold, className)} style={{ color: ds.colors.status.success.dark, backgroundColor: ds.colors.status.success.light }}><ArrowUp className="w-3 h-3 mr-1" /> {diff.toFixed(1)}%</div>;
+  return <div className={ds.cn('flex items-center px-2 py-0.5', ds.radius.full, ds.typography.sizes.xs, ds.typography.weights.bold, className)} style={{ color: ds.colors.status.error.dark, backgroundColor: ds.colors.status.error.light }}><ArrowDown className="w-3 h-3 mr-1" /> {Math.abs(diff).toFixed(1)}%</div>;
 };
 
 const StatCard = ({ title, value, subValue, icon: Icon, trend, colorClass = "bg-white" }) => (
-  <div className={`${colorClass} p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 group`}>
-    <div className="flex justify-between items-start mb-4">
-      <div className="p-3 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
-        <Icon className="w-6 h-6 text-slate-700" />
+  <div className={ds.cn(colorClass, ds.cardPadding.md, ds.radius.md, 'border', ds.shadows.card, ds.animations.normal, ds.hovers.card, 'group')} style={{ borderColor: ds.colors.slate[200] }}>
+    <div className={ds.cn('flex justify-between items-start', ds.spacing.md)}>
+      <div className={ds.cn('p-3 bg-white', ds.radius.md, ds.shadows.subtle, 'border group-hover:scale-110 transition-transform')} style={{ borderColor: ds.colors.slate[100] }}>
+        <Icon className={ds.cn(ds.iconSizes.lg, 'text-slate-700')} />
       </div>
       {trend}
     </div>
     <div>
-      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{title}</p>
-      <h3 className="text-3xl font-serif text-slate-900 font-semibold old-style-nums tracking-tight">
+      <p className={ds.cn(ds.typography.sizes.xs, ds.typography.weights.bold, 'text-slate-500 uppercase tracking-wider mb-1')}>{title}</p>
+      <h3 className={ds.cn(ds.typography.sizes['3xl'], 'font-serif text-slate-900', ds.typography.weights.semibold, ds.typography.numbers.oldstyle, 'tracking-tight')}>
         {value}
       </h3>
-      {subValue && <p className="text-sm text-slate-500 mt-1 font-medium">{subValue}</p>}
+      {subValue && <p className={ds.cn(ds.typography.sizes.sm, 'text-slate-500 mt-1', ds.typography.weights.medium)}>{subValue}</p>}
     </div>
   </div>
 );
@@ -139,8 +140,8 @@ const DashboardView = ({
 
     // For each selected agency, extract their employee history
     return selectedAgenciesForChart.map((agency, index) => {
-      const colors = ['#0ea5e9', '#f59e0b', '#10b981']; // Sky, amber, emerald
-      const color = colors[index % colors.length];
+      const chartColors = [ds.colors.charts[1], ds.colors.charts[2], ds.colors.charts[3]]; // Colorblind-safe palette
+      const color = chartColors[index % chartColors.length];
 
       // Process empH (employee history) data
       const historyData = {};
@@ -264,16 +265,16 @@ const DashboardView = ({
 
       {/* Agency Selector Section */}
       {agencies && (
-        <div className="bg-gradient-to-br from-sky-50 to-white p-6 rounded-3xl border border-sky-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-sky-100 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-sky-600" />
+        <div className={ds.cn('bg-gradient-to-br from-sky-50 to-white', ds.cardPadding.md, ds.radius.lg, 'border border-sky-200', ds.shadows.soft)}>
+          <div className={ds.cn('flex items-center', ds.spacing.md, 'mb-4')}>
+            <div className={ds.cn('p-2 bg-sky-100', ds.radius.sm)}>
+              <TrendingUp className={ds.cn(ds.iconSizes.md, 'text-sky-600')} />
             </div>
             <div>
-              <h3 className="font-serif text-lg text-slate-900 font-semibold">
+              <h3 className={ds.cn('font-serif', ds.typography.sizes.lg, 'text-slate-900', ds.typography.weights.semibold)}>
                 Jämför specifika myndigheter
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className={ds.cn(ds.typography.sizes.xs, 'text-slate-500')}>
                 Välj upp till 3 myndigheter för att se deras individuella utveckling över tid
               </p>
             </div>
@@ -287,7 +288,7 @@ const DashboardView = ({
         </div>
       )}
 
-      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+      <div className={ds.cn('bg-white', ds.cardPadding.md, ds.radius.lg, 'border', ds.shadows.soft)} style={{ borderColor: ds.colors.slate[200] }}>
         <div className="mb-6">
           <RangeSlider
             min={1978}
@@ -297,7 +298,7 @@ const DashboardView = ({
           />
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-6">
+        <div className={ds.cn('flex flex-wrap items-center justify-between', ds.spacing.md, 'border-t pt-6')} style={{ borderColor: ds.colors.slate[100] }}>
           <SeriesSelector
             activeSeries={activeSeries}
             setActiveSeries={setActiveSeries}
@@ -310,15 +311,23 @@ const DashboardView = ({
             genderMode={genderMode}
             setGenderMode={setGenderMode}
           />
-          
+
           {!isMobile && (
-            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <div className={ds.cn('flex items-center w-full sm:w-auto justify-end', ds.spacing.md)}>
               <button
                 onClick={() => setIsAnimating(!isAnimating)}
-                className={`p-3 rounded-full transition-all shadow-sm flex items-center gap-2 ${isAnimating ? 'bg-red-50 text-red-600 ring-1 ring-red-200' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+                className={ds.cn(
+                  'p-3 flex items-center gap-2',
+                  ds.radius.full,
+                  ds.shadows.soft,
+                  ds.animations.normal,
+                  isAnimating
+                    ? 'bg-red-50 text-red-600 ring-1 ring-red-200'
+                    : 'bg-slate-900 text-white hover:bg-slate-800'
+                )}
               >
-                {isAnimating ? <Square className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
-                <span className="text-sm font-bold tabular-nums">{isAnimating ? animationYear : "Spela upp"}</span>
+                {isAnimating ? <Square className={ds.cn(ds.iconSizes.sm, 'fill-current')} /> : <Play className={ds.cn(ds.iconSizes.sm, 'fill-current')} />}
+                <span className={ds.cn(ds.typography.sizes.sm, ds.typography.weights.bold, ds.typography.numbers.tabular)}>{isAnimating ? animationYear : "Spela upp"}</span>
               </button>
             </div>
           )}
@@ -333,22 +342,30 @@ const DashboardView = ({
         </div>
       </div>
 
-      <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-card relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div className={ds.cn('bg-white', ds.cardPadding.lg, ds.radius.lg, 'border relative overflow-hidden', ds.shadows.card)} style={{ borderColor: ds.colors.slate[200] }}>
+        <div className={ds.cn('flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6', ds.spacing.md)}>
           <div>
-            <h3 className="font-serif text-2xl text-slate-900 font-semibold">Utveckling över tid</h3>
-            <p className="text-sm text-slate-500 mt-1 font-medium">
+            <h3 className={ds.cn('font-serif', ds.typography.sizes['2xl'], 'text-slate-900', ds.typography.weights.semibold)}>Utveckling över tid</h3>
+            <p className={ds.cn(ds.typography.sizes.sm, 'text-slate-500 mt-1', ds.typography.weights.medium)}>
               {normalizeData ? `Indexerad utveckling (${yearRange[0]}=100)` : perCapita ? 'Per 100 000 invånare' : 'Absoluta tal'}
             </p>
           </div>
 
           <button
             onClick={handleExportChart}
-            className="p-3 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-700 transition-colors border border-slate-200 bg-white shadow-sm flex items-center gap-2"
+            className={ds.cn(
+              'p-3 flex items-center gap-2',
+              ds.radius.md,
+              'text-slate-500 hover:text-slate-700 hover:bg-slate-100',
+              'border bg-white',
+              ds.shadows.soft,
+              ds.animations.normal
+            )}
+            style={{ borderColor: ds.colors.slate[200] }}
             title="Ladda ner CSV"
           >
-            <Download className="w-4 h-4" />
-            <span className="text-sm font-medium">Exportera</span>
+            <Download className={ds.iconSizes.sm} />
+            <span className={ds.cn(ds.typography.sizes.sm, ds.typography.weights.medium)}>Exportera</span>
           </button>
         </div>
 
@@ -471,7 +488,7 @@ const DashboardView = ({
 
       {/* Agency Details Cards */}
       {agencyChartData && agencyChartData.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className={ds.cn(ds.grids.threeColumn, ds.spacing.lg)}>
           {agencyChartData.map((agencyInfo, index) => {
             const womenPct = agencyInfo.women && agencyInfo.men
               ? Math.round((agencyInfo.women / (agencyInfo.women + agencyInfo.men)) * 100)
@@ -480,20 +497,20 @@ const DashboardView = ({
             return (
               <div
                 key={index}
-                className="bg-white p-6 rounded-2xl border-2 shadow-sm hover:shadow-md transition-all"
+                className={ds.cn('bg-white', ds.cardPadding.md, ds.radius.md, 'border-2', ds.shadows.card)}
                 style={{ borderColor: agencyInfo.color }}
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className={ds.cn('flex items-start justify-between', ds.spacing.md)}>
                   <div className="flex-1">
-                    <h4 className="font-serif text-lg text-slate-900 font-semibold mb-1 leading-tight">
+                    <h4 className={ds.cn('font-serif', ds.typography.sizes.lg, 'text-slate-900', ds.typography.weights.semibold, 'mb-1 leading-tight')}>
                       {agencyInfo.name}
                     </h4>
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className={ds.cn('flex items-center gap-2 mt-2')}>
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className={ds.cn('w-3 h-3', ds.radius.full)}
                         style={{ backgroundColor: agencyInfo.color }}
                       />
-                      <span className="text-xs font-mono text-slate-500 uppercase tracking-wider">
+                      <span className={ds.cn(ds.typography.sizes.xs, 'font-mono text-slate-500 uppercase tracking-wider')}>
                         Vald myndighet
                       </span>
                     </div>
@@ -502,30 +519,31 @@ const DashboardView = ({
 
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    <p className={ds.cn(ds.typography.sizes.xs, ds.typography.weights.bold, 'text-slate-500 uppercase tracking-wider mb-1')}>
                       Anställda
                     </p>
-                    <p className="text-2xl font-serif font-semibold text-slate-900 old-style-nums">
+                    <p className={ds.cn(ds.typography.sizes['2xl'], 'font-serif text-slate-900', ds.typography.weights.semibold, ds.typography.numbers.oldstyle)}>
                       {agencyInfo.current?.toLocaleString('sv-SE') || '–'}
                     </p>
                   </div>
 
                   {womenPct !== null && (
                     <div>
-                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      <p className={ds.cn(ds.typography.sizes.xs, ds.typography.weights.bold, 'text-slate-500 uppercase tracking-wider mb-2')}>
                         Könsfördelning
                       </p>
-                      <div className="flex items-center gap-2 text-xs mb-1">
-                        <span className="text-pink-600 font-medium">{womenPct}% Kvinnor</span>
-                        <span className="text-indigo-600 font-medium">{100 - womenPct}% Män</span>
+                      <div className={ds.cn('flex items-center gap-2', ds.typography.sizes.xs, 'mb-1')}>
+                        <span className={ds.cn(ds.typography.weights.medium)} style={{ color: ds.colors.status.error.main }}>{womenPct}% Kvinnor</span>
+                        <span className={ds.cn(ds.typography.weights.medium)} style={{ color: ds.colors.primary[600] }}>{100 - womenPct}% Män</span>
                       </div>
-                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden flex">
+                      <div className={ds.cn('w-full h-2 overflow-hidden flex', ds.radius.full)} style={{ backgroundColor: ds.colors.slate[100] }}>
                         <div
-                          className="bg-pink-400 h-full"
-                          style={{ width: `${womenPct}%` }}
+                          className="h-full"
+                          style={{ width: `${womenPct}%`, backgroundColor: ds.colors.status.error.main }}
                         />
                         <div
-                          className="bg-indigo-500 h-full flex-1"
+                          className="h-full flex-1"
+                          style={{ backgroundColor: ds.colors.primary[600] }}
                         />
                       </div>
                     </div>
@@ -537,39 +555,39 @@ const DashboardView = ({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Myndigheter" 
-          value={currentYearData?.count || 0} 
-          icon={Building2} 
-          trend={<TrendArrow current={currentYearData?.count} previous={prevYearData?.count} />} 
-        />
-        
-        <StatCard 
-          title="Anställda" 
-          value={<AnimatedNumber value={Math.round((currentYearData?.emp || 0)/1000)} suffix="k" />} 
-          subValue="i statlig sektor"
-          icon={Users} 
-          trend={<TrendArrow current={currentYearData?.emp} previous={prevYearData?.emp} />} 
+      <div className={ds.cn(ds.grids.stats, ds.spacing.lg)}>
+        <StatCard
+          title="Myndigheter"
+          value={currentYearData?.count || 0}
+          icon={Building2}
+          trend={<TrendArrow current={currentYearData?.count} previous={prevYearData?.count} />}
         />
 
-        <div className="col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-end mb-4">
+        <StatCard
+          title="Anställda"
+          value={<AnimatedNumber value={Math.round((currentYearData?.emp || 0)/1000)} suffix="k" />}
+          subValue="i statlig sektor"
+          icon={Users}
+          trend={<TrendArrow current={currentYearData?.emp} previous={prevYearData?.emp} />}
+        />
+
+        <div className={ds.cn('col-span-2 bg-white', ds.cardPadding.md, ds.radius.md, 'border flex flex-col justify-center', ds.shadows.card)} style={{ borderColor: ds.colors.slate[200] }}>
+          <div className={ds.cn('flex justify-between items-end', ds.spacing.md)}>
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Jämställdhet</p>
-              <h3 className="text-2xl font-serif text-slate-900 font-medium">{isAnimating ? animationYear : yearRange[1]}</h3>
+              <p className={ds.cn(ds.typography.sizes.xs, ds.typography.weights.bold, 'text-slate-500 uppercase tracking-wider mb-1')}>Jämställdhet</p>
+              <h3 className={ds.cn(ds.typography.sizes['2xl'], 'font-serif text-slate-900', ds.typography.weights.medium)}>{isAnimating ? animationYear : yearRange[1]}</h3>
             </div>
-            <div className="flex gap-4 text-sm font-medium">
-              <span className="text-pink-600">{pctWomen}% Kvinnor</span>
-              <span className="text-indigo-600">{100 - pctWomen}% Män</span>
+            <div className={ds.cn('flex', ds.spacing.md, ds.typography.sizes.sm, ds.typography.weights.medium)}>
+              <span style={{ color: ds.colors.status.error.main }}>{pctWomen}% Kvinnor</span>
+              <span style={{ color: ds.colors.primary[600] }}>{100 - pctWomen}% Män</span>
             </div>
           </div>
-          
-          <div className="w-full bg-indigo-50 h-4 rounded-full overflow-hidden flex">
-            <div className="bg-pink-500 h-full transition-all duration-500 ease-out relative group" style={{ width: `${pctWomen}%` }}>
+
+          <div className={ds.cn('w-full h-4 overflow-hidden flex', ds.radius.full)} style={{ backgroundColor: ds.colors.primary[50] }}>
+            <div className={ds.cn('h-full ease-out relative group', ds.animations.verySlow)} style={{ width: `${pctWomen}%`, backgroundColor: ds.colors.status.error.main, transition: 'all 500ms' }}>
               <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
-            <div className="bg-indigo-500 h-full flex-1 transition-all duration-500 ease-out relative group">
+            <div className={ds.cn('h-full flex-1 ease-out relative group', ds.animations.verySlow)} style={{ backgroundColor: ds.colors.primary[600], transition: 'all 500ms' }}>
               <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
           </div>
@@ -594,51 +612,51 @@ const DashboardView = ({
         const currentWomenShare = pctWomen;
 
         return (
-          <div className="bg-gradient-to-br from-sky-50 to-white p-6 rounded-2xl border border-sky-200 shadow-sm animate-fade-in">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-sky-100 rounded-lg">
-                <Play className="w-5 h-5 text-sky-600" />
+          <div className={ds.cn('bg-gradient-to-br from-sky-50 to-white', ds.cardPadding.md, ds.radius.md, 'border border-sky-200', ds.shadows.soft, 'animate-fade-in')}>
+            <div className={ds.cn('flex items-center mb-4', ds.spacing.md)}>
+              <div className={ds.cn('p-2 bg-sky-100', ds.radius.sm)}>
+                <Play className={ds.cn(ds.iconSizes.md, 'text-sky-600')} />
               </div>
               <div>
-                <h4 className="font-serif text-lg text-slate-900 font-semibold">
+                <h4 className={ds.cn('font-serif', ds.typography.sizes.lg, 'text-slate-900', ds.typography.weights.semibold)}>
                   Utveckling {yearRange[0]}–{animationYear}
                 </h4>
-                <p className="text-xs text-slate-500">Förändring sedan animeringsstart</p>
+                <p className={ds.cn(ds.typography.sizes.xs, 'text-slate-500')}>Förändring sedan animeringsstart</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded-xl border border-slate-100">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Myndigheter</p>
+            <div className={ds.cn(ds.grids.threeColumn, ds.spacing.md)}>
+              <div className={ds.cn('bg-white p-4', ds.radius.md, 'border')} style={{ borderColor: ds.colors.slate[100] }}>
+                <p className={ds.cn(ds.typography.sizes.xs, ds.typography.weights.bold, 'text-slate-500 uppercase tracking-wider mb-2')}>Myndigheter</p>
                 <div className="flex items-baseline gap-2">
-                  <span className={`text-2xl font-serif font-semibold ${agenciesDiff >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                  <span className={ds.cn(ds.typography.sizes['2xl'], 'font-serif', ds.typography.weights.semibold)} style={{ color: agenciesDiff >= 0 ? ds.colors.status.success.dark : ds.colors.status.error.dark }}>
                     {agenciesDiff >= 0 ? '+' : ''}{agenciesDiff}
                   </span>
-                  <span className={`text-sm font-medium ${agenciesPct >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <span className={ds.cn(ds.typography.sizes.sm, ds.typography.weights.medium)} style={{ color: agenciesPct >= 0 ? ds.colors.status.success.main : ds.colors.status.error.main }}>
                     ({agenciesPct >= 0 ? '+' : ''}{agenciesPct.toFixed(1)}%)
                   </span>
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-xl border border-slate-100">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Anställda</p>
+              <div className={ds.cn('bg-white p-4', ds.radius.md, 'border')} style={{ borderColor: ds.colors.slate[100] }}>
+                <p className={ds.cn(ds.typography.sizes.xs, ds.typography.weights.bold, 'text-slate-500 uppercase tracking-wider mb-2')}>Anställda</p>
                 <div className="flex items-baseline gap-2">
-                  <span className={`text-2xl font-serif font-semibold ${employeesDiff >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                  <span className={ds.cn(ds.typography.sizes['2xl'], 'font-serif', ds.typography.weights.semibold)} style={{ color: employeesDiff >= 0 ? ds.colors.status.success.dark : ds.colors.status.error.dark }}>
                     {employeesDiff >= 0 ? '+' : ''}{Math.round(employeesDiff / 1000)}k
                   </span>
-                  <span className={`text-sm font-medium ${employeesPct >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <span className={ds.cn(ds.typography.sizes.sm, ds.typography.weights.medium)} style={{ color: employeesPct >= 0 ? ds.colors.status.success.main : ds.colors.status.error.main }}>
                     ({employeesPct >= 0 ? '+' : ''}{employeesPct.toFixed(1)}%)
                   </span>
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-xl border border-slate-100">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Kvinnor</p>
+              <div className={ds.cn('bg-white p-4', ds.radius.md, 'border')} style={{ borderColor: ds.colors.slate[100] }}>
+                <p className={ds.cn(ds.typography.sizes.xs, ds.typography.weights.bold, 'text-slate-500 uppercase tracking-wider mb-2')}>Kvinnor</p>
                 <div className="flex items-baseline gap-2">
-                  <span className={`text-2xl font-serif font-semibold ${womenDiff >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                  <span className={ds.cn(ds.typography.sizes['2xl'], 'font-serif', ds.typography.weights.semibold)} style={{ color: womenDiff >= 0 ? ds.colors.status.success.dark : ds.colors.status.error.dark }}>
                     {womenDiff >= 0 ? '+' : ''}{Math.round(womenDiff / 1000)}k
                   </span>
-                  <span className="text-sm font-medium text-pink-600">
+                  <span className={ds.cn(ds.typography.sizes.sm, ds.typography.weights.medium)} style={{ color: ds.colors.status.error.main }}>
                     [{startWomenShare}% → {currentWomenShare}%]
                   </span>
                 </div>
