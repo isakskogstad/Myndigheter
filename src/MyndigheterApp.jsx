@@ -477,6 +477,24 @@ export default function MyndigheterV6() {
     setTooltipAgency(null);
   }, []);
 
+  // Handle undo - MUST be defined before useEffect that uses it
+  const handleUndo = useCallback(() => {
+    filterHistory.undo();
+    const prev = filterHistory.current;
+    setRegistrySearch(prev.search);
+    setRegistryFilter(prev.filter);
+    setDepartmentFilter(prev.dept);
+  }, [filterHistory, setRegistrySearch, setDepartmentFilter]);
+
+  // Handle redo - MUST be defined before useEffect that uses it
+  const handleRedo = useCallback(() => {
+    filterHistory.redo();
+    const next = filterHistory.current;
+    setRegistrySearch(next.search);
+    setRegistryFilter(next.filter);
+    setDepartmentFilter(next.dept);
+  }, [filterHistory, setRegistrySearch, setDepartmentFilter]);
+
   // Keyboard navigation handler
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -528,7 +546,8 @@ export default function MyndigheterV6() {
     setKeyboardIndex(-1);
   }, [registrySearch, registryFilter, departmentFilter]);
 
-  // Save filter state for undo/redo
+  // Save filter state for undo/redo (kept for future use)
+  // eslint-disable-next-line no-unused-vars
   const saveFilterState = useCallback(() => {
     filterHistory.push({
       search: registrySearch,
@@ -536,24 +555,6 @@ export default function MyndigheterV6() {
       dept: departmentFilter
     });
   }, [registrySearch, registryFilter, departmentFilter, filterHistory]);
-
-  // Handle undo
-  const handleUndo = useCallback(() => {
-    filterHistory.undo();
-    const prev = filterHistory.current;
-    setRegistrySearch(prev.search);
-    setRegistryFilter(prev.filter);
-    setDepartmentFilter(prev.dept);
-  }, [filterHistory, setRegistrySearch, setDepartmentFilter]);
-
-  // Handle redo
-  const handleRedo = useCallback(() => {
-    filterHistory.redo();
-    const next = filterHistory.current;
-    setRegistrySearch(next.search);
-    setRegistryFilter(next.filter);
-    setDepartmentFilter(next.dept);
-  }, [filterHistory, setRegistrySearch, setDepartmentFilter]);
 
   const [copyFeedback, setCopyFeedback] = useState(null);
   const ITEMS_PER_PAGE = 20;
