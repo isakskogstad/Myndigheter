@@ -2,7 +2,7 @@
 
 Ett modernt, interaktivt verktyg för att utforska, visualisera och analysera den svenska statsförvaltningens utveckling från 1978 till idag.
 
-**Live Demo:** [isakskogstad.github.io/myndigheter](https://isakskogstad.github.io/SWE-Myndighetsregister)
+**Live Demo:** [isakskogstad.github.io/myndigheter](https://isakskogstad.github.io/myndigheter)
 
 ![Dashboard Preview](https://via.placeholder.com/1200x600.png?text=Svenska+Myndigheter+Dashboard)
 
