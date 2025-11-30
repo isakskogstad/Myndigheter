@@ -9,7 +9,8 @@ import {
   Github,
   X,
   PieChart,
-  Database
+  Database,
+  Command
 } from 'lucide-react';
 import ds from '../../styles/designSystem';
 
@@ -33,7 +34,8 @@ const Sidebar = ({
   isDark,
   onToggleDark,
   isOpen,
-  onClose
+  onClose,
+  onOpenCommandPalette
 }) => {
   const navItems = [
     { id: 'overview', label: 'Översikt', icon: LayoutDashboard },
@@ -78,6 +80,18 @@ const Sidebar = ({
 
       {/* Footer Actions */}
       <div className={ds.cn('p-4 border-t')} style={{ borderColor: ds.colors.slate[200] }}>
+        {/* Command Palette Button */}
+        <button
+          onClick={onOpenCommandPalette}
+          className={ds.cn('flex items-center justify-between w-full p-2.5 mb-2 text-slate-500 hover:bg-slate-100 border border-slate-200', ds.radius.md, ds.animations.normal, ds.typography.sizes.xs, ds.typography.weights.medium)}
+        >
+          <span className="flex items-center gap-2">
+            <Command className={ds.cn(ds.iconSizes.sm)} />
+            Sök...
+          </span>
+          <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-mono">⌘K</kbd>
+        </button>
+
         <button
           onClick={onToggleIntro}
           className={ds.cn('flex items-center justify-between w-full p-2.5 mb-4', ds.radius.md, ds.animations.normal, ds.typography.sizes.xs, ds.typography.weights.medium, showIntro ? 'border' : 'text-slate-500 hover:bg-slate-100')}

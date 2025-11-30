@@ -1,4 +1,4 @@
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, Suspense, useCallback } from 'react';
 import { useAgencyData, useUrlState } from './hooks/useAgencyData';
 import { LoadingState, ErrorState } from './components/ui/LoadingState';
 import { regionColors } from './data/constants';
@@ -9,6 +9,7 @@ import AgencyDetailsPanel from './components/ui/AgencyDetailsPanel';
 import CompareFloatingBar from './components/ui/CompareFloatingBar';
 import CompareModal from './components/ui/CompareModal';
 import AboutModal from './components/ui/AboutModal';
+import CommandPalette from './components/ui/CommandPalette';
 
 // Lazy load Views
 const DashboardView = React.lazy(() => import('./components/views/DashboardView'));
@@ -44,11 +45,11 @@ export default function MyndigheterApp() {
   const { data, loading, error, refresh } = useAgencyData();
   const agencies = data || [];
   const [isDark, setIsDark] = useDarkMode();
-  
+
   const [activeTab, setActiveTab] = useUrlState('view', 'overview');
   const [yearRange, setYearRange] = useUrlState('years', [1978, 2025]);
   const [searchQuery, setSearchQuery] = useUrlState('q', '');
-  
+
   const [activeSeries, setActiveSeries] = useUrlState('series', { agencies: true, employees: false });
   const [normalizeData, setNormalizeData] = useUrlState('index', false);
   const [perCapita, setPerCapita] = useUrlState('capita', false);
@@ -72,6 +73,61 @@ export default function MyndigheterApp() {
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [selectedAgency, setSelectedAgency] = useState(null);
   const [selectedAgenciesForChart, setSelectedAgenciesForChart] = useState([]);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // Command Palette keyboard shortcut (⌘K / Ctrl+K)
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(true);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Handle Command Palette navigation
+  const handleCommandPaletteNavigate = useCallback((viewId, options) => {
+    setActiveTab(viewId);
+    if (options?.selectedAgency) {
+      const agency = agencies.find(a => a.n === options.selectedAgency || a.name === options.selectedAgency);
+      if (agency) setSelectedAgency(agency);
+    }
+  }, [agencies, setActiveTab]);
+
+  // Export data as CSV
+  const handleExportCSV = useCallback(() => {
+    const headers = ['Namn', 'Kortnamn', 'Departement', 'Ort', 'Anställda', 'Kvinnor', 'Män', 'Status'];
+    const csvContent = [
+      headers.join(';'),
+      ...agencies.map(a => [
+        a.n || a.name,
+        a.sh || '',
+        a.d || a.department || '',
+        a.city || '',
+        a.emp || '',
+        a.w || '',
+        a.m || '',
+        a.e ? 'Avvecklad' : 'Aktiv'
+      ].join(';'))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `svenska-myndigheter-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [agencies]);
+
+  // Clear all filters
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery('');
+    setDeptFilter('all');
+    setStatusFilter('active');
+  }, [setSearchQuery, setDeptFilter, setStatusFilter]);
 
   React.useEffect(() => {
     let timer;
@@ -114,8 +170,8 @@ export default function MyndigheterApp() {
       else if (city.includes('UPPSALA')) stats.Uppsala++;
       else stats.Övrigt++;
     });
-    return Object.entries(stats).map(([name, value]) => ({ 
-      name, value, color: regionColors[name] || '#78716c' 
+    return Object.entries(stats).map(([name, value]) => ({
+      name, value, color: regionColors[name] || '#78716c'
     }));
   }, [activeAgencies]);
 
@@ -155,15 +211,33 @@ export default function MyndigheterApp() {
       onSearchChange={setSearchQuery}
       agencies={agencies}
       onSelectAgency={setSelectedAgency}
+      onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
     >
-      <AgencyDetailsPanel 
-        agency={selectedAgency} 
-        onClose={() => setSelectedAgency(null)} 
+      {/* Command Palette */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onNavigate={handleCommandPaletteNavigate}
+        onToggleTheme={() => setIsDark(!isDark)}
+        onExport={handleExportCSV}
+        onClearFilters={handleClearFilters}
+        agencies={agencies.map(a => ({
+          name: a.n || a.name,
+          department: a.d || a.department,
+          region: a.city,
+          employees: a.emp
+        }))}
+        isDark={isDark}
       />
-      
+
+      <AgencyDetailsPanel
+        agency={selectedAgency}
+        onClose={() => setSelectedAgency(null)}
+      />
+
       {showCompareModal && (
-        <CompareModal 
-          compareList={compareList} 
+        <CompareModal
+          compareList={compareList}
           onClose={() => setShowCompareModal(false)}
           onRemove={(agency) => setCompareList(prev => prev.filter(a => a.n !== agency.n))}
         />
@@ -173,7 +247,7 @@ export default function MyndigheterApp() {
         <AboutModal onClose={() => setShowAboutModal(false)} />
       )}
 
-      <CompareFloatingBar 
+      <CompareFloatingBar
         compareList={compareList}
         onClear={() => setCompareList([])}
         onOpenCompare={() => setShowCompareModal(true)}
@@ -216,14 +290,14 @@ export default function MyndigheterApp() {
         )}
 
         {activeTab === 'analysis' && (
-          <AnalysisView 
-            agencies={agencies} 
-            onSelectAgency={setSelectedAgency} 
+          <AnalysisView
+            agencies={agencies}
+            onSelectAgency={setSelectedAgency}
           />
         )}
 
         {activeTab === 'list' && (
-          <RegistryView 
+          <RegistryView
             agencies={agencies}
             departments={departments}
             filterText={searchQuery}
@@ -236,7 +310,7 @@ export default function MyndigheterApp() {
             onToggleCompare={(agency) => {
               setCompareList(prev => {
                 if (prev.find(a => a.n === agency.n)) return prev.filter(a => a.n !== agency.n);
-                if (prev.length >= 3) return prev; 
+                if (prev.length >= 3) return prev;
                 return [...prev, agency];
               });
             }}
@@ -245,7 +319,7 @@ export default function MyndigheterApp() {
         )}
 
         {activeTab === 'departments' && (
-          <DepartmentsView 
+          <DepartmentsView
             agencies={agencies}
             departments={departments}
             departmentStats={departmentStats}

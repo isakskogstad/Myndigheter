@@ -1,82 +1,83 @@
-# Myndigheter - React Components
+# Myndigheter - React Dashboard v2.0
 
 ## Overview
-React-komponenter för att visa information om svenska myndigheter. Deployas automatiskt till GitHub Pages.
+Interaktiv dashboard för att visualisera och analysera svenska myndigheter.
+Deployas automatiskt till GitHub Pages.
 
 **Live site:** https://isakskogstad.github.io/myndigheter
 
 ## Tech Stack
 - React 18
-- Create React App (react-scripts 5.0.1)
+- Vite 6.0 (migrated from CRA)
+- TailwindCSS 3.4
+- Framer Motion for animations
+- react-simple-maps for interactive Sweden map
+- cmdk for Command Palette (⌘K)
+- Recharts for data visualization
 - GitHub Pages för hosting
 - GitHub Actions för CI/CD
 
 ## Project Structure
 ```
 src/
-├── App.js       # Huvudkomponent
-├── App.css      # Styling för App
-├── index.js     # Entry point
-└── index.css    # Global styling
+├── main.jsx              # Entry point (Vite)
+├── App.jsx               # Error boundary wrapper
+├── MyndigheterApp.jsx    # Main app component
+├── components/
+│   ├── charts/           # Recharts components, SwedenMap
+│   ├── layout/           # Layout, Sidebar, Header, BottomNav
+│   ├── ui/               # GlassCard, AnimatedNumber, CommandPalette, etc.
+│   └── views/            # Dashboard, Analysis, Regions, etc.
+├── data/                 # Constants, data fetching
+├── hooks/                # Custom React hooks
+└── styles/
+    └── designSystem.js   # Design tokens
 
-public/          # Statiska filer
 .github/
 └── workflows/
-    ├── deploy.yml              # Auto-deploy till GitHub Pages
+    ├── deploy.yml              # Auto-deploy to GitHub Pages
     ├── claude.yml              # Claude Code integration (@claude)
     └── claude-code-review.yml  # Auto PR reviews
 ```
 
 ## Commands
 ```bash
-npm install      # Installera dependencies
-npm start        # Kör lokalt (localhost:3000)
-npm run build    # Bygg för produktion
-npm run deploy   # Manuell deploy till GitHub Pages
-npm test         # Kör tester
+npm install      # Install dependencies
+npm run dev      # Run locally (localhost:5173)
+npm run build    # Build for production (dist/)
+npm run preview  # Preview production build
+npm run deploy   # Manual deploy to GitHub Pages
 ```
+
+## Key Features (v2.0)
+- **Command Palette** (⌘K/Ctrl+K) - Quick navigation and search
+- **Interactive Sweden Map** - Click counties to filter agencies
+- **Glassmorphism UI** - Modern card components with backdrop blur
+- **Dark Mode** - Full dark theme support
+- **Animated Numbers** - Spring-based number transitions
+- **CSV Export** - Download agency data
 
 ## Development Guidelines
 
 ### Code Style
-- Använd funktionella komponenter med hooks
-- Svenska för UI-text, engelska för kod/kommentarer
-- Håll komponenter små och återanvändbara
-- CSS i separata filer (inte inline)
+- Functional components with hooks
+- Swedish for UI text, English for code/comments
+- Use design system tokens from `designSystem.js`
+- Use GlassCard for card components
+- CSS via TailwindCSS utility classes
 
 ### Git Workflow
-- `main` branch triggar automatisk deploy
-- Skapa feature branches för nya funktioner
-- PR reviews körs automatiskt av Claude
+- `main` branch triggers automatic deploy
+- Create feature branches for new features
+- PR reviews run automatically by Claude
 
 ### When Making Changes
-1. Testa lokalt med `npm start`
-2. Kör `npm run build` för att verifiera build
-3. Commita med beskrivande meddelanden på svenska/engelska
-4. Push till main för auto-deploy
-
-## Claude Code Instructions
-
-### For Issues
-När någon taggar `@claude` i en issue:
-- Analysera problemet
-- Föreslå lösning med kod
-- Skapa PR om möjligt
-
-### For PR Reviews
-- Granska kodkvalitet
-- Kontrollera React best practices
-- Verifiera att build fungerar
-- Ge konstruktiv feedback
-
-### Allowed Operations
-- Läsa och analysera kod
-- Skapa och uppdatera filer
-- Köra build/test kommandon
-- Skapa commits och PRs
-- Kommentera på issues/PRs
+1. Test locally with `npm run dev`
+2. Run `npm run build` to verify build
+3. Commit with descriptive messages
+4. Push to main for auto-deploy
 
 ## Notes
-- Projektet använder svenska myndigheter som tema
-- Håll det enkelt - detta är ett demo/portfolio projekt
-- GitHub Pages deployment sker via `gh-pages` branch
+- GitHub Pages deployment uses `gh-pages` branch with `dist/` folder
+- Large bundles warning is expected (MyndigheterApp contains all data)
+- Uses external TopoJSON for Sweden counties map

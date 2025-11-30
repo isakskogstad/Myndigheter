@@ -4,18 +4,19 @@ import Header from './Header';
 import BottomNav from './BottomNav';
 import ScrollToTop from '../ui/ScrollToTop';
 
-const Layout = ({ 
-  children, 
-  activeTab, 
-  onTabChange, 
-  showIntro, 
+const Layout = ({
+  children,
+  activeTab,
+  onTabChange,
+  showIntro,
   onToggleIntro,
   isDark,
   onToggleDark,
   searchQuery,
   onSearchChange,
   agencies,
-  onSelectAgency
+  onSelectAgency,
+  onOpenCommandPalette
 }) => {
   
   // Map ID to label
@@ -32,13 +33,14 @@ const Layout = ({
     <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-800 font-sans selection:bg-primary-100 selection:text-primary-900">
       
       {/* Desktop Sidebar */}
-      <Sidebar 
-        activeTab={activeTab} 
+      <Sidebar
+        activeTab={activeTab}
         onTabChange={onTabChange}
         showIntro={showIntro}
         onToggleIntro={onToggleIntro}
         isDark={isDark}
         onToggleDark={onToggleDark}
+        onOpenCommandPalette={onOpenCommandPalette}
       />
       
       <div className="flex-1 flex flex-col min-w-0 bg-white/50 pb-16 lg:pb-0">
