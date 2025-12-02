@@ -2,9 +2,8 @@
 
 Ett modernt, interaktivt verktyg för att utforska, visualisera och analysera den svenska statsförvaltningens utveckling från 1978 till idag.
 
-**Live Demo:** [isakskogstad.github.io/myndigheter](https://isakskogstad.github.io/myndigheter)
+**Öppna verktyget här:** [isakskogstad.github.io/myndigheter](https://isakskogstad.github.io/myndigheter)
 
-![Dashboard Preview](https://via.placeholder.com/1200x600.png?text=Svenska+Myndigheter+Dashboard)
 
 ## Funktioner
 
@@ -14,14 +13,6 @@ Ett modernt, interaktivt verktyg för att utforska, visualisera och analysera de
 *   **Datavisualisering:** Interaktiva grafer för könsfördelning, regional spridning och departementsstruktur.
 *   **Export:** Ladda ner dataset som CSV för egen analys.
 
-## Teknisk Översikt
-
-Projektet är byggt med **React 18** och använder en modern "Scandinavian Clean" designfilosofi.
-
-*   **Styling:** Tailwind CSS (Stone & Sage färgpalett)
-*   **Grafer:** Recharts & Chart.js
-*   **Ikoner:** Lucide React
-*   **Arkitektur:** Modulär komponentstruktur med separata vyer.
 
 ### Projektstruktur
 
